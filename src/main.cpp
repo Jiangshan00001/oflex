@@ -20,13 +20,13 @@ int main()
     ORegexParse mRegex;
     NFAConvert mConvert;
 
-    //FSA_TABLE nfa = mRegex.CreateNFA("abca*");
-    FSA_TABLE nfa = mRegex.CreateNFA("(a|b)*(aa|bb)*");
-    FSA_TABLE dfa = mConvert.NFAtoDFA(nfa);
+    FSA_TABLE nfa = mRegex.CreateNFA("(a|b)*(aa|bb)(a|b)*");
+    //FSA_TABLE nfa = mRegex.CreateNFA("abc*");
     fsa_to_dot(nfa, "nfa1.dot");
+    FSA_TABLE dfa = mConvert.NFAtoDFA(nfa);
     fsa_to_dot(dfa, "dfa1.dot");
-
-
+    FSA_TABLE dfa_min = mConvert.DFAmin(dfa);
+    fsa_to_dot(dfa_min, "dfa_min.dot");
 
 
     return 0;

@@ -8,13 +8,16 @@ QT       += core
 
 QT       -= gui
 
+CONFIG += C++11
+
+
 TARGET = regex_lex
 CONFIG   += console
 CONFIG   -= app_bundle
 
 TEMPLATE = app
 
-DEFINES += QT_BUILD DEBUG_ALL
+DEFINES += QT_BUILD
 
 INCLUDEPATH += ../../src/
 

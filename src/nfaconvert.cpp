@@ -3,20 +3,38 @@
 
 #include "nfaconvert.h"
 
+
+std::set<char> GetStatesTransChars(std::set<NFAState*> mNFAs)
+{
+    std::set<char> mChars;
+    //////////////////////////////////////////////////////////////////////////
+    std::set<NFAState*>::iterator itn;
+    for (itn=mNFAs.begin();itn!=mNFAs.end();++itn)
+    {
+        //搜索所有字符
+        std::set<char> mChars1;
+        mChars1 = (*itn)->GetTransChar();
+        mChars.insert(mChars1.begin(), mChars1.end());
+    }
+    return mChars;
+}
+
 NFAConvert::NFAConvert()
 {
+}
+
+FSA_TABLE NFAConvert::NFAListCont(std::vector<FSA_TABLE> &nfa_list)
+{
+
 }
 
 FSA_TABLE NFAConvert::NFAtoDFA(FSA_TABLE &nfa)
 {
 #if 1
-    //std::set<NFAState*> mStateTable;
-    //std::set<NFAState*> mStateSet;
     std::set<NFAState*> mNFAs;//一个DFA内部的NFA
 
     FSA_TABLE m_DFATable;
     int m_nNextStateID = 0;
-    m_DFATable.clear();//清空DFA
 
     if(nfa.empty())return m_DFATable;
 
@@ -40,16 +58,8 @@ FSA_TABLE NFAConvert::NFAtoDFA(FSA_TABLE &nfa)
 
             mNFAs = m_DFATable[i]->GetNFAState();
 
-            std::set<char> mChars;
-            //////////////////////////////////////////////////////////////////////////
-            std::set<NFAState*>::iterator itn;
-            for (itn=mNFAs.begin();itn!=mNFAs.end();++itn)
-            {
-                //搜索所有字符
-                std::set<char> mChars1;
-                mChars1 = (*itn)->GetTransChar();
-                mChars.insert(mChars1.begin(), mChars1.end());
-            }
+            /////搜索所有字符
+            std::set<char> mChars = GetStatesTransChars(mNFAs);
 
             /// 遍历所有字符
             for (std::set<char>::iterator itc=mChars.begin();itc!=mChars.end();++itc)
@@ -64,14 +74,12 @@ FSA_TABLE NFAConvert::NFAtoDFA(FSA_TABLE &nfa)
                 pState = new NFAState(mNFAEps, ++m_nNextStateID);
                 if(!GetExistState(pState, m_DFATable))
                 {
-                //if(m_DFATable.find())
-                pState->m_MarkFlag = 0;
-                m_DFATable.push_back(pState);
-                m_DFATable[i]->AddTransition(*itc, pState);
+                    pState->m_MarkFlag = 0;
+                    m_DFATable.push_back(pState);
+                    m_DFATable[i]->AddTransition(*itc, pState);
                 }
                 else
                 {
-                    delete pState;
                     pState = GetExistState(pState, m_DFATable);
                     m_DFATable[i]->AddTransition(*itc, pState);
                 }
@@ -87,6 +95,122 @@ FSA_TABLE NFAConvert::NFAtoDFA(FSA_TABLE &nfa)
 #endif
     return m_DFATable;
 }
+
+
+/// 查找dfa中组成的nfa，哪个里有指定的nfa状态
+NFAState* GetDfaFromNfa(NFAState* nfa_state, FSA_TABLE &dfa)
+{
+    for(int i=0;i<dfa.size();++i)
+    {
+        auto nfas = dfa[i]->GetNFAState();
+        for(auto j=nfas.begin();j!=nfas.end();++j)
+        {
+            if (nfa_state==(*j))
+            {
+                return dfa[i];
+            }
+        }
+    }
+    return NULL;
+}
+
+FSA_TABLE NFAConvert::DFAmin(FSA_TABLE &dfa)
+{
+    FSA_TABLE dfa_min;
+
+    if (dfa.empty())return dfa_min;
+
+    int id=0;
+
+    //将状态分2组，可接受状态和非可接受状态
+    std::set<NFAState*> st_acc;
+    std::set<NFAState*> st_not_acc;
+
+    for(auto it=dfa.begin();it!=dfa.end();++it)
+    {
+        if((*it)->m_bAcceptingState&0x02)
+        {
+            st_acc.insert(it, it+1);
+        }
+        else
+        {
+            st_not_acc.insert(it, it+1);
+        }
+    }
+
+    dfa_min.push_back(new NFAState(st_not_acc,++id ));
+    dfa_min.push_back(new NFAState(st_acc,++id ));
+
+    int is_changed=0;
+
+    do{
+        is_changed = 0;
+        for(int i=0;i<dfa_min.size();++i)
+        {
+            auto curr_st = dfa_min[i];
+
+            //对于所有输入符号，状态s和状态t必须转换到等价的状态里。 否则就要拆分
+            auto & sub_states=curr_st->GetNFAState();
+            for(auto j=sub_states.begin();j!=sub_states.end();++j)
+            {
+                std::multimap<char, NFAState*>* one_st_trans = (*j)->GetTransition();
+                for (auto k=one_st_trans->begin();k!=one_st_trans->end();++k)
+                {
+                    std::set<NFAState*> curr_already_status;
+                    curr_st->GetTransition(k->first, curr_already_status);
+
+                    NFAState * new_state= GetDfaFromNfa(k->second, dfa_min);
+
+                    if (curr_already_status.size()==0)
+                    {
+                        //没有这个转换状态，直接添加
+                        curr_st->AddTransition(k->first, new_state);
+                    }
+                    else if ((*curr_already_status.begin())==new_state)
+                    {
+                        //和当前是等价状态，下一个
+                        continue;
+                    }
+                    else
+                    {
+                        //遇到状态不等价，拆分
+                        is_changed=1;
+                        std::set<NFAState*> stn;
+                        stn.insert(*j);
+                        sub_states.erase(j);
+                        dfa_min.push_back(new NFAState(stn,++id ));
+                        break;
+                    }
+                }
+                if (is_changed)break;
+            }
+            if (is_changed)break;
+        }
+    } while(is_changed);
+
+
+
+    /// 去除无效状态
+    /// 不能从起始状态到达的状态
+    /// 不能到达结束态的状态
+    for(int i=0;i<dfa_min.size();++i)
+    {
+        if (dfa_min[i]->GetNFAState().size()==0)
+        {
+            dfa_min.erase(dfa_min.begin()+i);
+            i-=1;
+        }
+        if (dfa_min[i]->IsDeadEnd())
+        {
+            dfa_min.erase(dfa_min.begin()+i);
+            i-=1;
+        }
+    }
+
+    return dfa_min;
+
+}
+
 std::set<NFAState*> NFAConvert::MoveOne(char mC, std::set<NFAState*> mNFAs)
 {
     std::set<NFAState*> mRes;
@@ -101,7 +225,7 @@ std::set<NFAState*> NFAConvert::MoveOne(char mC, std::set<NFAState*> mNFAs)
     return mRes;
 
 }
-std::set<NFAState*> NFAConvert::MoveZero(std::set<NFAState*> mNFAs, std::set<NFAState*> &mRes1)
+std::set<NFAState*> NFAConvert::MoveZero(std::set<NFAState*> &mNFAs, std::set<NFAState*> &mRes1)
 {
     std::set<NFAState*> mRes1Bak;
     std::set<NFAState*> mResCurr;

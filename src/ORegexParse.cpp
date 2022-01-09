@@ -167,7 +167,7 @@ string ORegexParse::ConcatExpand(string strRegEx)
 {
 	string strRes;
 	
-	for(int i=0; i<strRegEx.size()-1; ++i)
+    for(int i=0; i<strRegEx.size()-1; ++i)
 	{
 		char cLeft	= strRegEx[i];
 		char cRight = strRegEx[i+1];
@@ -197,7 +197,7 @@ bool ORegexParse::Eval(FSA_STACK &OperandStack, std::stack<char> &OperatorStack)
         case  '*'://#42
             return Star(OperandStack);
 			break;
-		case 124:
+        case '|'://124
             return Union(OperandStack);
 			break;
 		case   8:
@@ -212,7 +212,7 @@ bool ORegexParse::Eval(FSA_STACK &OperandStack, std::stack<char> &OperatorStack)
 }
 
 
-FSA_TABLE ORegexParse::CreateNFA(string strRegEx)
+FSA_TABLE ORegexParse::CreateNFA(string strRegEx, int startId)
 {
 	// Parse regular expresion using similar 
 	// method to evaluate arithmetic expressions
@@ -234,6 +234,25 @@ FSA_TABLE ORegexParse::CreateNFA(string strRegEx)
 
     FSA_STACK OperandStack;
     std::stack<char> OperatorStack;
+
+    m_nNextStateID = startId;
+    ///添加起始状态
+    ///
+    ///
+    ///
+    // Create 2 new states on the heap
+    NFAState *s0 = new NFAState(++m_nNextStateID);
+    s0->m_bAcceptingState|=1;
+    // Create a NFA from these 2 states
+    FSA_TABLE startNFATable;
+    startNFATable.push_back(s0);
+
+    // push it onto the operand stack
+    OperandStack.push(startNFATable);
+    OperatorStack.push(8);
+
+
+
 
 	for(int i=0; i<strRegEx.size(); ++i)
 	{
@@ -291,7 +310,7 @@ FSA_TABLE ORegexParse::CreateNFA(string strRegEx)
 	}
 	
 	// Last NFA state is always accepting state
-	m_NFATable[m_NFATable.size()-1]->m_bAcceptingState = 1;
+    m_NFATable[m_NFATable.size()-1]->m_bAcceptingState |= 2;
 	
     return m_NFATable;
 }

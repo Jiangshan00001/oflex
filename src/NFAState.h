@@ -36,32 +36,34 @@ protected:
 	
 	///当前转换包含的字符集合
 	std::set<char> m_TransChar;
-	//! State ID
+    /// State ID
 	int m_nStateID;
 
-	//! Set of NFA state from which this state is constructed
+    /// 由多个状态合并为1个状态时，此处用于记录合并前的状态
+    /// Set of NFA state from which this state is constructed
 	std::set<NFAState*> m_NFAStates;
 
 public:
 	int m_MarkFlag;
 
-	//! True if this state is accepting state
-	bool m_bAcceptingState;
-    /// accepting state. used only if m_bAcceptingState is true
+    //! 0--middle state. 1--start state. 2--final state
+    int m_bAcceptingState;
+    /// accepting state. used only if m_bAcceptingState is 2
     std::set<int> m_AcceptingState;
     
     
 public:
-	//! Default constructor
-	//NFAState() : m_nStateID(-1), m_bAcceptingState(0) {};
 
-	//! parameterized constructor
+    /// parameterized constructor
+    /// 传入一个参数，代表状态id
 	NFAState(int nID) : m_nStateID(nID), m_bAcceptingState(0) {};
 
 	//! Constructs new state from the set of other states
 	/*! This is necessary for subset construction algorithm
 		because there a new DFA state is constructed from 
-		one or more NFA states
+        one or more NFA states.
+        mNFAState:对于由多个状态合并为一个状态时，用于记录之前的状态集合，例如子集构造
+
 	*/
 	NFAState(std::set<NFAState*> mNFAState, int nID)
 	{
@@ -70,11 +72,15 @@ public:
 		
 		// DFA state is accepting state if it is constructed from 
 		// an accepting NFA state
-		m_bAcceptingState	= 0;
+        m_bAcceptingState	= 0;
 		std::set<NFAState*>::iterator iter;
 		for(iter=mNFAState.begin(); iter!=mNFAState.end(); ++iter)
-			if((*iter)->m_bAcceptingState)
-				m_bAcceptingState = 1;
+            if((*iter)->m_bAcceptingState!=m_bAcceptingState)
+                m_bAcceptingState |= (*iter)->m_bAcceptingState;
+
+
+
+
     }
 
 	//! Copy Constructor

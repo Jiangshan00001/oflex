@@ -35,7 +35,7 @@ public:
 	/// http://blog.csdn.net/liuhuiyi/article/details/8433203
 	///  Algorithm Thompson's construction
 	/// http://www.cppblog.com/woaidongmao/archive/2010/10/21/97245.html
-    FSA_TABLE CreateNFA(std::string strRegEx);
+    FSA_TABLE CreateNFA(std::string strRegEx, int startId=0);
 
 private:
 	///将两个字符之间省略的连接符添加上

@@ -24,10 +24,18 @@ void fsa_to_dot(FSA_TABLE & fsa, std::string mFileName)
 		mFile<<"color=lightgrey;\n";
 
 
-		if(fsa[i]->m_bAcceptingState)
-		mFile<<fsa[i]->GetStateID()<<"[shape=doublecircle]"<<endl;
-		else
-		mFile<<fsa[i]->GetStateID()<<"[shape=circle]"<<endl;
+        if(fsa[i]->m_bAcceptingState==0x02)
+        {//end
+            mFile<<fsa[i]->GetStateID()<<"[shape=doublecircle]"<<endl;
+        }
+        else if (fsa[i]->m_bAcceptingState==0x01)
+        {//start
+            mFile<<fsa[i]->GetStateID()<<"[shape=circle color=green]"<<endl;
+        }
+        else if (fsa[i]->m_bAcceptingState==0x03)
+        {//start&end
+            mFile<<fsa[i]->GetStateID()<<"[shape=doublecircle  color=green]"<<endl;
+        }
 
 		mFile<<"label="<<"cluster"<<i<<";\n";
 		mFile<<"}\n";
@@ -96,10 +104,19 @@ void fsa_to_cout(FSA_TABLE & fsa, std::string mFileName)
 		cout<<"color=lightgrey;\n";
 		
 		
-		if(fsa[i]->m_bAcceptingState)
-			cout<<fsa[i]->GetStateID()<<"[shape=doublecircle]"<<endl;
-		else
-			cout<<fsa[i]->GetStateID()<<"[shape=circle]"<<endl;
+        if(fsa[i]->m_bAcceptingState==0x02)
+        {//end
+            cout<<fsa[i]->GetStateID()<<"[shape=doublecircle]"<<endl;
+        }
+        else if (fsa[i]->m_bAcceptingState==0x01)
+        {//start
+            cout<<fsa[i]->GetStateID()<<"[shape=circle color=green]"<<endl;
+        }
+        else if (fsa[i]->m_bAcceptingState==0x03)
+        {//start&end
+            cout<<fsa[i]->GetStateID()<<"[shape=doublecircle  color=green]"<<endl;
+        }
+
 		
 		cout<<"label="<<"cluster"<<i<<";\n";
 		cout<<"}\n";
