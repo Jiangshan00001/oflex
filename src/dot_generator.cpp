@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-#include <FSTREAM>
+#include <fstream>
 
 #include "dot_generator.h"
 
