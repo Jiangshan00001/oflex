@@ -254,19 +254,19 @@ bool ORegexParse::CreateNFA(string strRegEx)
 		cout<<"i="<<i<<endl;
 #endif
 
-		if(IsInput(c))///ÓĞÒ»¸ö×Ö·û£¬Éú³ÉºÏ¼¯²¢·ÅÈë²Ù×÷Êı¶ÑÕ»
+		if(IsInput(c))///æœ‰ä¸€ä¸ªå­—ç¬¦ï¼Œç”Ÿæˆåˆé›†å¹¶æ”¾å…¥æ“ä½œæ•°å †æ ˆ
 		{
 			PushOneByte(c);
 		}
-		else if(m_OperatorStack.empty())/// Èç¹ûËã·ûÎª¿Õ£¬Ö±½Ó·ÅÈë
+		else if(m_OperatorStack.empty())/// å¦‚æœç®—ç¬¦ä¸ºç©ºï¼Œç›´æ¥æ”¾å…¥
 		{
 			m_OperatorStack.push(c);
 		}
-		else if(IsLeftParanthesis(c))///×óÀ¨ºÅ
+		else if(IsLeftParanthesis(c))///å·¦æ‹¬å·
 		{
 			m_OperatorStack.push(c);
 		}
-		else if(IsRightParanthesis(c))///ÓÒÀ¨ºÅ
+		else if(IsRightParanthesis(c))///å³æ‹¬å·
 		{
 			// Evaluate everyting in paranthesis
 			while(!IsLeftParanthesis(m_OperatorStack.top()))
@@ -277,9 +277,9 @@ bool ORegexParse::CreateNFA(string strRegEx)
 		}
 		else
 		{
-			/// Èç¹ûÖ®Ç°ÒÑ¾­ÓĞËã·ûÁË£¬²¢ÇÒµ±Ç°Ëã·û²»ÊÇÀ¨ºÅ
+			/// å¦‚æœä¹‹å‰å·²ç»æœ‰ç®—ç¬¦äº†ï¼Œå¹¶ä¸”å½“å‰ç®—ç¬¦ä¸æ˜¯æ‹¬å·
 			while(!m_OperatorStack.empty() && Presedence(c, m_OperatorStack.top()))
-			{///Èç¹ûÄÚ²¿Ô­ÓĞËã·û£¬ÇĞµ±Ç°Ëã·ûµÄÓÅÏÈ¼¶Ğ¡£¬ÔòÏÈ¼ÆËã				
+			{///å¦‚æœå†…éƒ¨åŸæœ‰ç®—ç¬¦ï¼Œåˆ‡å½“å‰ç®—ç¬¦çš„ä¼˜å…ˆçº§å°ï¼Œåˆ™å…ˆè®¡ç®—				
 				if(!Eval())
 					return 0;
 			}
@@ -333,7 +333,7 @@ std::set<NFAState*> ORegexParse::MoveZero(std::set<NFAState*> mNFAs, std::set<NF
 	while (!mRes1Bak.empty())
 	{
 		mResNeedRefresh.clear();
-		mResCurr = MoveOne(0, mRes1Bak);///ĞÂÉú³ÉµÄ
+		mResCurr = MoveOne(0, mRes1Bak);///æ–°ç”Ÿæˆçš„
 
 		for (std::set<NFAState*>::iterator it2=mResCurr.begin();it2!=mResCurr.end();++it2)
 		{
@@ -364,14 +364,14 @@ int ORegexParse::NFAToDFA()
 {
 	//std::set<NFAState*> mStateTable;
 	//std::set<NFAState*> mStateSet;
-	std::set<NFAState*> mNFAs;//Ò»¸öDFAÄÚ²¿µÄNFA
+	std::set<NFAState*> mNFAs;//ä¸€ä¸ªDFAå†…éƒ¨çš„NFA
 
 	m_nNextStateID = 0;
-	m_DFATable.clear();//Çå¿ÕDFA
+	m_DFATable.clear();//æ¸…ç©ºDFA
 
 	if(m_NFATable.empty())return 0;
 
-	/// ÕÒµ½¿ªÊ¼×´Ì¬µÄeps×ª»»£¬²¢ÉèÖÃÎªÎ´±ê¼Ç
+	/// æ‰¾åˆ°å¼€å§‹çŠ¶æ€çš„epsè½¬æ¢ï¼Œå¹¶è®¾ç½®ä¸ºæœªæ ‡è®°
 	mNFAs.clear();
 	mNFAs.insert(m_NFATable[0]);
 	mNFAs = MoveZero(mNFAs,mNFAs);
@@ -381,13 +381,13 @@ int ORegexParse::NFAToDFA()
 	m_DFATable.push_back(pState);
 
 
-	/// ½«ËùÓĞÎ´±ê¼ÇµÄ±ê¼Ç£¬²¢´¦Àí
+	/// å°†æ‰€æœ‰æœªæ ‡è®°çš„æ ‡è®°ï¼Œå¹¶å¤„ç†
 	for (int i=0;i<m_DFATable.size();++i)
 	{
 		if (!m_DFATable[i]->m_MarkFlag)
 		{
 			m_DFATable[i]->m_MarkFlag = 1;
-			///´¦Àí
+			///å¤„ç†
 
 			mNFAs = m_DFATable[i]->GetNFAState();
 			
@@ -396,13 +396,13 @@ int ORegexParse::NFAToDFA()
 			std::set<NFAState*>::iterator itn;
 			for (itn=mNFAs.begin();itn!=mNFAs.end();++itn)
 			{
-				//ËÑË÷ËùÓĞ×Ö·û
+				//æœç´¢æ‰€æœ‰å­—ç¬¦
 				std::set<char> mChars1;
 				mChars1 = (*itn)->GetTransChar();
 				mChars.insert(mChars1.begin(), mChars1.end());
 			}
 
-			/// ±éÀúËùÓĞ×Ö·û
+			/// éå†æ‰€æœ‰å­—ç¬¦
 			for (std::set<char>::iterator itc=mChars.begin();itc!=mChars.end();++itc)
 			{
 				std::set<NFAState*> mNFAMove;
@@ -429,7 +429,7 @@ int ORegexParse::NFAToDFA()
 			}
 
 			//////////////////////////////////////////////////////////////////////////
-			//i = -1;///ÖØĞÂ²éÕÒÎ´±ê¼ÇµÄ×´Ì¬
+			//i = -1;///é‡æ–°æŸ¥æ‰¾æœªæ ‡è®°çš„çŠ¶æ€
 		}
 	}
 

@@ -32,22 +32,22 @@ public:
 
 	int NFAToDFA();
 
-	/// ½«Ò»¸öÕıÔò±í´ïÊ½×ª»»ÎªNFA
-	/// ÆäÖĞÓÃµ½2¸öËã·¨£º1¸öÎª¶ÑÕ»·½·¨ÇóÖµ
+	/// å°†ä¸€ä¸ªæ­£åˆ™è¡¨è¾¾å¼è½¬æ¢ä¸ºNFA
+	/// å…¶ä¸­ç”¨åˆ°2ä¸ªç®—æ³•ï¼š1ä¸ªä¸ºå †æ ˆæ–¹æ³•æ±‚å€¼
 	/// http://blog.csdn.net/liuhuiyi/article/details/8433203
 	///  Algorithm Thompson's construction
 	/// http://www.cppblog.com/woaidongmao/archive/2010/10/21/97245.html
 	bool CreateNFA(std::string strRegEx);
 
 private:
-	///½«Á½¸ö×Ö·ûÖ®¼äÊ¡ÂÔµÄÁ¬½Ó·ûÌí¼ÓÉÏ
+	///å°†ä¸¤ä¸ªå­—ç¬¦ä¹‹é—´çœç•¥çš„è¿æ¥ç¬¦æ·»åŠ ä¸Š
 	std::string ConcatExpand(std::string strRegEx);
 	
 
 	int NFAStackPop(FSA_TABLE &NFATable);
 	int NFAStackPush(FSA_TABLE &NFATable);
 
-	///½«Ò»¸ö×Ö·û£¬×°»»ÎªÒ»¸ö×´Ì¬ºÏ¼¯£¬·ÅÈëoperand stack	
+	///å°†ä¸€ä¸ªå­—ç¬¦ï¼Œè£…æ¢ä¸ºä¸€ä¸ªçŠ¶æ€åˆé›†ï¼Œæ”¾å…¥operand stack	
 	int PushOneByte(char chInput);
 
 
@@ -83,11 +83,11 @@ private:
 	//! Checks if the specific character is input character
 	bool IsInput(char ch) { return(!IsOperator(ch)); };
 	
-	/// ×óÀ¨ºÅ
+	/// å·¦æ‹¬å·
 	//! Checks is a character left parantheses
 	bool IsLeftParanthesis(char ch) { return(ch == OPERATOR_LEFTP); };
 	
-	/// ÓÒÀ¨ºÅ
+	/// å³æ‹¬å·
 	//! Checks is a character right parantheses
 	bool IsRightParanthesis(char ch) { return(ch == OPERATOR_RIGHTP); };
 
@@ -96,7 +96,7 @@ private:
 	bool Eval();
 
 
-	/// ²é¿´ÓÅÏÈ¼¶£¬Èç¹ûopLeft<=opRight Ôò·µ»Ø1£¬·ñÔò·µ»Ø0
+	/// æŸ¥çœ‹ä¼˜å…ˆçº§ï¼Œå¦‚æœopLeft<=opRight åˆ™è¿”å›1ï¼Œå¦åˆ™è¿”å›0
 	//! Returns operator presedence
 	/*! Returns 1 if presedence of opLeft <= opRight.
 	
@@ -109,13 +109,13 @@ private:
 		if(opLeft == opRight)
 			return 1;
 
-		if(opLeft == OPERATOR_STAR)/// starÓÅÏÈ¼¶×î¸ß
+		if(opLeft == OPERATOR_STAR)/// starä¼˜å…ˆçº§æœ€é«˜
 			return 0;
 
 		if(opRight == OPERATOR_STAR)
 			return 1;
 
-		if(opLeft == OPERATOR_CONCAT)///ÓÅÏÈ¼¶ÖĞµÈ
+		if(opLeft == OPERATOR_CONCAT)///ä¼˜å…ˆçº§ä¸­ç­‰
 			return 0;
 
 		if(opRight == OPERATOR_CONCAT)
@@ -127,12 +127,12 @@ private:
 		return 1;
 	};
 
-	/// mC=0Ê±£¬ÎªepsµÄÌø×ª
+	/// mC=0æ—¶ï¼Œä¸ºepsçš„è·³è½¬
 	std::set<NFAState*> MoveOne(char mC, std::set<NFAState*> mNFAs);
-	//ËùÓĞÍ¨¹ıepsÄÜÏà»¥Á¬ÔÚÒ»ÆğµÄ
+	//æ‰€æœ‰é€šè¿‡epsèƒ½ç›¸äº’è¿åœ¨ä¸€èµ·çš„
 	std::set<NFAState*> MoveZero(std::set<NFAState*> mNFAs, std::set<NFAState*> &mRes1);
 
-    /// ¼ì²émAÔÚmDFAsÖĞÊÇ·ñ´æÔÚ,Èç¹û´æÔÚ£¬Ôò·µ»ØÒÑ´æÔÚµÄÖ¸Õë£¬·ñÔò·µ»Ø0
+    /// æ£€æŸ¥mAåœ¨mDFAsä¸­æ˜¯å¦å­˜åœ¨,å¦‚æœå­˜åœ¨ï¼Œåˆ™è¿”å›å·²å­˜åœ¨çš„æŒ‡é’ˆï¼Œå¦åˆ™è¿”å›0
     NFAState* GetExistState(NFAState* mA, FSA_TABLE &mDFAs);
 };
 

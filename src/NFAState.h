@@ -26,7 +26,7 @@
 
 
 
-/// ´ú±íNFA/DFAÀïµÄÒ»¸ö×´Ì¬¡£
+/// ä»£è¡¨NFA/DFAé‡Œçš„ä¸€ä¸ªçŠ¶æ€ã€‚
 //! State Class
 class NFAState
 {
@@ -34,7 +34,7 @@ protected:
 	//! Transitions from this state to other 
 	std::multimap<char, NFAState*> m_Transition;
 	
-	///µ±Ç°×ª»»°üº¬µÄ×Ö·û¼¯ºÏ
+	///å½“å‰è½¬æ¢åŒ…å«çš„å­—ç¬¦é›†åˆ
 	std::set<char> m_TransChar;
 	//! State ID
 	int m_nStateID;

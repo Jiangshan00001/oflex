@@ -1,9 +1,9 @@
 #include "NFAState.h"
 #include "ORegexParse.h"
-/// ¶ÑÕ»·½·¨ÇóÖµ
+/// å †æ ˆæ–¹æ³•æ±‚å€¼
 /// http://blog.csdn.net/liuhuiyi/article/details/8433203
 
-/// µ±Ç°±í´ïÊ½Ö§³Ö:
+/// å½“å‰è¡¨è¾¾å¼æ”¯æŒ:
 /// *
 /// |
 /// +
