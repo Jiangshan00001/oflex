@@ -25,11 +25,11 @@ SOURCES += \
     ../../src/ORegexList.cpp \
     ../../src/ORegexParse.cpp \
     main_qt.cpp \
-    nfaconvert.cpp
+    ../../src/nfaconvert.cpp
 
 HEADERS += \
     ../../src/dot_generator.h \
     ../../src/NFAState.h \
     ../../src/ORegexList.h \
     ../../src/ORegexParse.h \
-    nfaconvert.h
+    ../../src/nfaconvert.h
