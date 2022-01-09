@@ -25,7 +25,9 @@ NFAConvert::NFAConvert()
 
 FSA_TABLE NFAConvert::NFAListCont(std::vector<FSA_TABLE> &nfa_list)
 {
+    FSA_TABLE ret;
 
+    return ret;
 }
 
 FSA_TABLE NFAConvert::NFAtoDFA(FSA_TABLE &nfa)
