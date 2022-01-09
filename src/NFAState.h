@@ -171,6 +171,7 @@ public:
 		m_NFAStates		= other.m_NFAStates;
 
 		m_MarkFlag = other.m_MarkFlag;
+        return *this;
 	};
 
 	//! Override the comparison operator
