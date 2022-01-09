@@ -75,7 +75,7 @@ public:
 		for(iter=mNFAState.begin(); iter!=mNFAState.end(); ++iter)
 			if((*iter)->m_bAcceptingState)
 				m_bAcceptingState = 1;
-	};
+    }
 
 	//! Copy Constructor
 	NFAState(const NFAState &other)
@@ -93,7 +93,7 @@ public:
 		assert(pState != NULL);
 		m_TransChar.insert(chInput);
 		m_Transition.insert(std::make_pair(chInput, pState));
-	};
+    }
 
 
 	std::set<char> GetTransChar(){return m_TransChar;}
@@ -116,11 +116,11 @@ public:
 				//States.push_back(pState);
 				States.insert(pState);
 			}
-	};
+    }
 	std::multimap<char, NFAState*>* GetTransition()
 	{
 		return &m_Transition;
-	};
+    }
 
 
 	//! Returns the state id in form of string
@@ -129,7 +129,7 @@ public:
 		std::stringstream mA;
 		mA<<m_nStateID;
 		return mA.str();
-	};
+    }
 
 	/*! Returns the set of NFA states from 
 		which this DFA state was constructed
@@ -161,7 +161,7 @@ public:
 		TRACE("State %d is dead end.\n", m_nStateID); 
 		
 		return 1;
-	};	
+    }
 
 	//! Override the assignment operator
 	NFAState& operator=(const NFAState& other)
@@ -172,7 +172,7 @@ public:
 
 		m_MarkFlag = other.m_MarkFlag;
         return *this;
-	};
+    }
 
 	//! Override the comparison operator
 	bool operator==(const NFAState& other)
@@ -180,8 +180,11 @@ public:
 		if(m_NFAStates.empty())
 			return(m_nStateID == other.m_nStateID);
 		else return(m_NFAStates == other.m_NFAStates);
-	};
+    }
 };
+
+typedef std::deque<NFAState*> FSA_TABLE;
+typedef std::stack<FSA_TABLE> FSA_STACK;
 
 
 #endif // NFAState_h__

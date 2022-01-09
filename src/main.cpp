@@ -10,6 +10,7 @@
 /// ()
 /// abcd
 
+#ifndef QT_BUILD
 ///
 int main()
 {
@@ -24,4 +25,6 @@ int main()
 
 	return 0;
 }
+
+#endif
 

@@ -4,3 +4,5 @@ src/regrex_lex.creator.user
 src/regrex_lex.files
 src/regrex_lex.includes
 src/regrex_lex.config
+qt_build/build-regex_lex-Desktop_Qt_5_3_MinGW_32bit-Debug/*
+qt_build/regex_lex/regex_lex.pro.user
