@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 
 #project name
-project(regrex_lex VERSION 1.1)
+project(oflex VERSION 1.1)
 
 
 SET( CMAKE_VERBOSE_MAKEFILE on )
@@ -26,7 +26,7 @@ include_directories(src)
 #source directory
 aux_source_directory(src SRC_LISTA)
 
-add_executable(regrex_lex ${SRC_LISTA})
+add_executable(oflex ${SRC_LISTA})
 
 
 
