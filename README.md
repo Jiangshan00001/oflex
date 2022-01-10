@@ -1,2 +1,6 @@
-# regex_lex
-regex  lex parse.  parse the regex to dfa.
+# oflex
+open flex.
+parse lex file.
+output jump table.
+so that user can do what they want to do.
+
