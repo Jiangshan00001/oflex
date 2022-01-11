@@ -150,30 +150,40 @@ FSA_TABLE NFAConvert::DFAmin(FSA_TABLE &dfa)
         for(int i=0;i<dfa_min.size();++i)
         {
             auto curr_st = dfa_min[i];
+            curr_st->ClearTransition();
 
             //对于所有输入符号，状态s和状态t必须转换到等价的状态里。 否则就要拆分
             auto & sub_states=curr_st->GetNFAState();
+            if (sub_states.empty())continue;
+
             for(auto j=sub_states.begin();j!=sub_states.end();++j)
             {
                 std::multimap<char, NFAState*>* one_st_trans = (*j)->GetTransition();
                 for (auto k=one_st_trans->begin();k!=one_st_trans->end();++k)
                 {
                     std::set<NFAState*> curr_already_status;
-                    curr_st->GetTransition(k->first, curr_already_status);
 
                     NFAState * new_state= GetDfaFromNfa(k->second, dfa_min);
-
-                    if (curr_already_status.size()==0)
+                    if(j==sub_states.begin())
                     {
-                        //没有这个转换状态，直接添加
+                        //直接添加: 第0个子状态，直接添加
                         curr_st->AddTransition(k->first, new_state);
+                        continue;
+                    }
+
+                    curr_st->GetTransition(k->first, curr_already_status);
+                    if (curr_already_status.size()==0)
+
+                    {
+                        //没有这个转换状态
+                        is_changed=1;
                     }
                     else if ((*curr_already_status.begin())==new_state)
                     {
                         //和当前是等价状态，下一个
                         continue;
                     }
-                    else
+
                     {
                         //遇到状态不等价，拆分
                         is_changed=1;
@@ -207,6 +217,14 @@ FSA_TABLE NFAConvert::DFAmin(FSA_TABLE &dfa)
             dfa_min.erase(dfa_min.begin()+i);
             i-=1;
         }
+    }
+
+
+    /// 更新accept state 状态
+    for(int i=0;i<dfa_min.size();++i)
+    {
+        dfa_min[i]->updateAcceptingState();
+
     }
 
     return dfa_min;

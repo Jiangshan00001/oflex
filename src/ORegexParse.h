@@ -7,7 +7,7 @@
 
 class ORegexParse
 {
-private:
+public:
 	int m_nNextStateID;	
 	//! Operator Stack
 	/*! Operators are simple characters like "*" & "|" */

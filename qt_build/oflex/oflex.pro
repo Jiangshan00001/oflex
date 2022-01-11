@@ -11,7 +11,7 @@ QT       -= gui
 CONFIG += C++11
 
 
-TARGET = regex_lex
+TARGET = oflex
 CONFIG   += console
 CONFIG   -= app_bundle
 

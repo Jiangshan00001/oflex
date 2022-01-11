@@ -69,19 +69,21 @@ public:
 	{
 		m_NFAStates			= mNFAState;
 		m_nStateID			= nID;
-		
-		// DFA state is accepting state if it is constructed from 
-		// an accepting NFA state
-        m_bAcceptingState	= 0;
-		std::set<NFAState*>::iterator iter;
-		for(iter=mNFAState.begin(); iter!=mNFAState.end(); ++iter)
-            if((*iter)->m_bAcceptingState!=m_bAcceptingState)
-                m_bAcceptingState |= (*iter)->m_bAcceptingState;
-
-
-
+        updateAcceptingState();
 
     }
+    bool updateAcceptingState()
+    {
+        // DFA state is accepting state if it is constructed from
+        // an accepting NFA state
+        m_bAcceptingState	= 0;
+        std::set<NFAState*>::iterator iter;
+        for(iter=m_NFAStates.begin(); iter!=m_NFAStates.end(); ++iter)
+            if((*iter)->m_bAcceptingState!=m_bAcceptingState)
+                m_bAcceptingState |= (*iter)->m_bAcceptingState;
+    }
+
+
 
 	//! Copy Constructor
 	NFAState(const NFAState &other)
@@ -91,6 +93,12 @@ public:
 	virtual ~NFAState() {};
 
 
+
+    void ClearTransition()
+    {
+        m_TransChar.clear();
+        m_Transition.clear();
+    }
 
 
 	//! Adds a transition from this state to the other
@@ -149,19 +157,33 @@ public:
 		leading away from this state. This function
 		is used for reducing the DFA.
 	*/
-	bool IsDeadEnd()
+    bool IsDeadEnd(int loop_max=0)
 	{
 		if(m_bAcceptingState)
+        {
+            ///初始态或终止态
 			return 0;
+        }
 		if(m_Transition.empty())
+        {
 			return 1;
+        }
+
+        if (loop_max>1000)
+        {
+            ///循环太多，找不到是不是有终点，认为不是dead
+            return 0;
+        }
 		
 		std::multimap<char, NFAState*>::iterator iter;
 		for(iter=m_Transition.begin(); iter!=m_Transition.end(); ++iter)
 		{
 			NFAState *toState = iter->second;
 			if(toState != this)
-				return 0;
+            {
+                if (!toState->IsDeadEnd(loop_max+1))
+                    return 0;
+            }
 		}
 
 		TRACE("State %d is dead end.\n", m_nStateID); 

@@ -26,7 +26,7 @@ void fsa_to_dot(FSA_TABLE & fsa, std::string mFileName)
 
         if(fsa[i]->m_bAcceptingState==0x02)
         {//end
-            mFile<<fsa[i]->GetStateID()<<"[shape=doublecircle]"<<endl;
+            mFile<<fsa[i]->GetStateID()<<"[shape=doublecircle color=red]"<<endl;
         }
         else if (fsa[i]->m_bAcceptingState==0x01)
         {//start
