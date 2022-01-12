@@ -28,11 +28,13 @@ SOURCES += \
     ../../src/ORegexList.cpp \
     ../../src/ORegexParse.cpp \
     main_qt.cpp \
-    ../../src/nfaconvert.cpp
+    ../../src/nfaconvert.cpp \
+    lexfileparse.cpp
 
 HEADERS += \
     ../../src/dot_generator.h \
     ../../src/NFAState.h \
     ../../src/ORegexList.h \
     ../../src/ORegexParse.h \
-    ../../src/nfaconvert.h
+    ../../src/nfaconvert.h \
+    lexfileparse.h
