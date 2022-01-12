@@ -72,7 +72,7 @@ public:
         updateAcceptingState();
 
     }
-    bool updateAcceptingState()
+    int updateAcceptingState()
     {
         // DFA state is accepting state if it is constructed from
         // an accepting NFA state
@@ -81,6 +81,8 @@ public:
         for(iter=m_NFAStates.begin(); iter!=m_NFAStates.end(); ++iter)
             if((*iter)->m_bAcceptingState!=m_bAcceptingState)
                 m_bAcceptingState |= (*iter)->m_bAcceptingState;
+
+        return 0;
     }
 
 
