@@ -2,7 +2,9 @@
 #define LEXFILEPARSE_H
 
 #include <string>
+#include <vector>
+#include <map>
 
-int lex_file_parse(const std::string &file_cont);
-
+std::map<std::string, std::string> lex_file_parse(const std::string &file_cont);
+int lex_file_parse2(const std::string &file_cont,std::vector<std::map<std::string, std::string> > &regex_rule, std::string &includes,std::string &add_code);
 #endif // LEXFILEPARSE_H

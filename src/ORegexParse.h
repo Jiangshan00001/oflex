@@ -37,6 +37,9 @@ public:
 	/// http://www.cppblog.com/woaidongmao/archive/2010/10/21/97245.html
     FSA_TABLE CreateNFA(std::string strRegEx, int startId=0);
 
+    /// 将flex中定义的表达式，转为nfa
+    FSA_TABLE CreateNFAFlex(std::string strRegEx, int startId=0);
+
 private:
 	///将两个字符之间省略的连接符添加上
 	std::string ConcatExpand(std::string strRegEx);
@@ -76,7 +79,8 @@ private:
 	//! Checks is a specific character and operator
 	bool IsOperator(char ch) { 
 		return ((ch == OPERATOR_STAR) || (ch == OPERATOR_UNION) ||
-			(ch == OPERATOR_LEFTP) || (ch == OPERATOR_RIGHTP) || (ch == OPERATOR_CONCAT)); };
+            (ch == OPERATOR_LEFTP) || (ch == OPERATOR_RIGHTP) || (ch == OPERATOR_CONCAT)||(ch==OPERATOR_DQUOTE)||(ch==OPERATOR_DOT)||
+                (ch==OPERATOR_LEFTMID)||(ch==OPERATOR_RIGHTMID)||(ch==OPERATOR_PLUS)||(ch==OPERATOR_WHY)); };
 	
 	//! Checks if the specific character is input character
 	bool IsInput(char ch) { return(!IsOperator(ch)); };
@@ -125,6 +129,7 @@ private:
 		return 1;
     }
 
+    int PushOneDot(FSA_STACK &dst);
 };
 
 #endif // ORegexParse_h__

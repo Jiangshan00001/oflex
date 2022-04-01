@@ -43,6 +43,33 @@ int ORegexParse::NFAStackPush(FSA_STACK &stk,FSA_TABLE &NFATable)
 	return 0;
 }
 
+
+int ORegexParse::PushOneDot(FSA_STACK &dst)
+{
+    // Create 2 new states on the heap
+    NFAState *s0 = new NFAState(++m_nNextStateID);
+    NFAState *s1 = new NFAState(++m_nNextStateID);
+
+    // Add the transition from s0->s1 on input character
+    for(int i=0x20;i<0x7f;++i)
+    {
+        if(i=='\n')continue;
+        s0->AddTransition(i, s1);
+    }
+
+
+    // Create a NFA from these 2 states
+    FSA_TABLE NFATable;
+    NFATable.push_back(s0);
+    NFATable.push_back(s1);
+
+
+    // push it onto the operand stack
+    dst.push(NFATable);
+
+    return 0;
+}
+
 int ORegexParse::PushOneByte(char chInput, FSA_STACK &dst)
 {
     // Create 2 new states on the heap
@@ -174,7 +201,7 @@ string ORegexParse::ConcatExpand(string strRegEx)
 		strRes	   += cLeft;
 		if((IsInput(cLeft)) || (IsRightParanthesis(cLeft)) || (cLeft == '*'))
 			if((IsInput(cRight)) || (IsLeftParanthesis(cRight)))
-				strRes += char(8);
+                strRes += char(OPERATOR_CONCAT);
 	}
 	strRes += strRegEx[strRegEx.size()-1];
 	
@@ -194,13 +221,13 @@ bool ORegexParse::Eval(FSA_STACK &OperandStack, std::stack<char> &OperatorStack)
 		// Check which operator it is
 		switch(chOperator)
 		{
-        case  '*'://#42
+        case  OPERATOR_STAR://#42
             return Star(OperandStack);
 			break;
-        case '|'://124
+        case OPERATOR_UNION://124
             return Union(OperandStack);
 			break;
-		case   8:
+        case   OPERATOR_CONCAT:
             return Concat(OperandStack);
 			break;
 		}
@@ -313,5 +340,187 @@ FSA_TABLE ORegexParse::CreateNFA(string strRegEx, int startId)
     m_NFATable[m_NFATable.size()-1]->m_bAcceptingState |= 2;
 	
     return m_NFATable;
+}
+
+FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
+{
+
+    ///TODO: "/*" 此字符串，需要解码到"时，认为是一个类似()的算符，内部的字符都是连接在一起的
+    // Parse regular expresion using similar
+    // method to evaluate arithmetic expressions
+    // But first we will detect concatenation and
+    // insert char(8) at the position where
+    // concatenation needs to occur
+
+#if DEBUG_ALL
+    cout<< strRegEx<<endl;
+#endif
+
+    strRegEx = strRegEx;//)
+
+#if DEBUG_ALL
+    cout<<"after ConcatExpand"<<strRegEx.size()<<": "<< strRegEx<<endl;
+#endif
+
+    FSA_TABLE mNFATable;
+
+    FSA_STACK OperandStack;
+    std::stack<char> OperatorStack;
+
+    m_nNextStateID = startId;
+    ///添加起始状态
+    ///
+    ///
+    ///
+    // Create 2 new states on the heap
+    NFAState *s0 = new NFAState(++m_nNextStateID);
+    s0->m_bAcceptingState|=1;
+    // Create a NFA from these 2 states
+    FSA_TABLE startNFATable;
+    startNFATable.push_back(s0);
+
+    ///起始状态和下面状态，使用eps连接
+    // push it onto the operand stack
+    OperandStack.push(startNFATable);
+    OperatorStack.push(OPERATOR_CONCAT);
+
+
+    int curr_status=0;//1--dquote. 0--normal
+
+
+    for(int i=0; i<strRegEx.size(); ++i)
+    {
+        // get the charcter
+        char c = strRegEx[i];
+
+#if DEBUG_ALL
+        cout<<"i="<<i<<endl;
+#endif
+        if (curr_status==1)
+        {
+            ///dquote mode
+            ///
+
+            if(c == OPERATOR_DQUOTE)
+            {
+                curr_status=0;
+                OperatorStack.pop();
+                while(OperatorStack.top()!=OPERATOR_DQUOTE)
+                    Eval(OperandStack, OperatorStack);
+                OperatorStack.pop();
+                continue;
+            }
+
+            PushOneByte(c, OperandStack);
+            OperatorStack.push(OPERATOR_CONCAT);
+            continue;
+        }
+        else if (curr_status==2)
+        {
+            //中括号[]
+            if (c==OPERATOR_RIGHTMID)
+            {
+                OperatorStack.pop();
+                while(OperatorStack.top()!=OPERATOR_LEFTMID)
+                    Eval(OperandStack, OperatorStack);
+                OperatorStack.pop();
+                curr_status=0;
+                continue;
+            }
+            if (c=='-')
+            {
+                char c1=strRegEx[i-1];
+                char c2=strRegEx[i+1];
+                for(int cc=c1+1;cc<c2;++cc)
+                {
+                    PushOneByte((char)cc, OperandStack);
+                    OperatorStack.push(OPERATOR_UNION);
+                }
+                continue;
+            }
+            //中括号
+            PushOneByte(c, OperandStack);
+            OperatorStack.push(OPERATOR_UNION);
+            continue;
+        }
+
+        if(IsInput(c))///有一个字符，生成合集并放入操作数堆栈
+        {
+            PushOneByte(c, OperandStack);
+        }
+        else if(IsLeftParanthesis(c))///左括号
+        {
+            OperatorStack.push(c);
+        }
+        else if(IsRightParanthesis(c))///右括号
+        {
+            // Evaluate everyting in paranthesis
+            while(!IsLeftParanthesis(OperatorStack.top()))
+                if(!Eval(OperandStack, OperatorStack))
+                    return mNFATable;
+                // Remove left paranthesis after the evaluation
+                OperatorStack.pop();
+        }
+        else if(c == OPERATOR_DQUOTE)
+        {
+            ///双引号
+            ///
+            OperatorStack.push(OPERATOR_DQUOTE);
+            curr_status=1;
+            continue;
+        }
+        else if (c==OPERATOR_DOT)
+        {
+            PushOneDot(OperandStack);
+            continue;
+        }
+        else if (c==OPERATOR_LEFTMID)
+        {
+            OperatorStack.push(OPERATOR_LEFTMID);
+            curr_status=2;
+            continue;
+        }
+        else if (c==OPERATOR_PLUS)
+        {//1个或多个
+
+        }
+        else if (c==OPERATOR_WHY)
+        {//0个或1个
+
+        }
+        else if(OperatorStack.empty())/// 如果算符为空，直接放入
+        {
+            OperatorStack.push(c);
+        }
+        else
+        {
+            /// 如果之前已经有算符了，并且当前算符不是括号
+            while(!OperatorStack.empty() && Presedence(c, OperatorStack.top()))
+            {///如果内部原有算符，且当前算符的优先级小，则先计算
+                if(!Eval(OperandStack, OperatorStack))
+                    return mNFATable;
+            }
+            OperatorStack.push(c);
+        }
+    }
+
+    // Evaluate the rest of operators
+    while(!OperatorStack.empty())
+    {
+        if(!Eval(OperandStack, OperatorStack))
+            return mNFATable;
+    }
+
+    // Pop the result from the stack
+    if(!NFAStackPop(OperandStack, mNFATable))
+    {
+        return mNFATable;
+    }
+
+    // Last NFA state is always accepting state
+    mNFATable[mNFATable.size()-1]->m_bAcceptingState |= 2;
+
+    return mNFATable;
+
 }
 

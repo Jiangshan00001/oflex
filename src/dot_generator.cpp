@@ -63,7 +63,7 @@ void fsa_to_dot(FSA_TABLE & fsa, std::string mFileName)
 			{
 				mT[0] = it->first;
 			}
-			cout<<"contact operator:"<< (unsigned int)it->first<<endl;
+            //cout<<"contact operator:"<< (unsigned int)it->first<<endl;
 			
 			mFile<<mT<<"\" ";
 			mFile<<"]\n";

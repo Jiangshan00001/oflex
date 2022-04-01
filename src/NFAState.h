@@ -23,6 +23,13 @@
 #define  OPERATOR_LEFTP '('
 #define  OPERATOR_RIGHTP ')'
 #define  OPERATOR_CONCAT 8
+#define OPERATOR_DQUOTE '\"'
+#define OPERATOR_DOT '.'
+#define OPERATOR_LEFTMID '['
+#define OPERATOR_RIGHTMID ']'
+#define OPERATOR_PLUS '+'
+#define OPERATOR_WHY '?'
+
 
 
 
