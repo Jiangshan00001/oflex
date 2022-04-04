@@ -15,8 +15,8 @@ function(diff_dfa  asm1  asm2)
 add_test( NAME test_diff_dfa${asm1} COMMAND diff  ${asm1} ${asm2} )
 endfunction()
 
-set(TEST_SRCS test1)
-set(TEST_SRCS ${TEST_SRCS} test2)
+set(TEST_SRCS test1 test2 test3)
+set(TEST_SRCS ${TEST_SRCS} test4)
 
 foreach(MY_ASM  ${TEST_SRCS})
 
