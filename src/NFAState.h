@@ -18,52 +18,75 @@
 #define ASSERT assert
 
 
+/// | or
+///
+/// [] one of char
+/// - between. a-z between a to z. include a and z.
+/// * zero or more
+/// ? 0 or 1
+/// | 1 or more
+/// ^ except
+///
+///
+/// \ seq
+/// . all char except \n. equal to ^\n
+
+
+
 #define  OPERATOR_STAR '*'
 #define  OPERATOR_UNION '|'
 #define  OPERATOR_LEFTP '('
 #define  OPERATOR_RIGHTP ')'
-#define  OPERATOR_CONCAT 8
+#define  OPERATOR_CONCAT 8  //EPS concat
 #define OPERATOR_DQUOTE '\"'
 #define OPERATOR_DOT '.'
 #define OPERATOR_LEFTMID '['
 #define OPERATOR_RIGHTMID ']'
-#define OPERATOR_PLUS '+'
-#define OPERATOR_WHY '?'
+#define OPERATOR_PLUS '+' //1个或多个重复
+#define OPERATOR_WHY '?'  //0个或1个
+#define OPERATOR_NOT '^'
+
+#define MIDDLE_STATE 0
+#define START_STATE 1
+#define FINAL_STATE 2
 
 
-
+#define EPS_CHAR (-1)
 
 /// 代表NFA/DFA里的一个状态。
 //! State Class
 class NFAState
 {
+
 protected:
+public:
 	//! Transitions from this state to other 
-	std::multimap<char, NFAState*> m_Transition;
+    std::multimap<int, NFAState*> m_transition;
 	
-	///当前转换包含的字符集合
-	std::set<char> m_TransChar;
+    ///curr chars to trans
+    std::set<int> m_trans_char;
     /// State ID
 	int m_nStateID;
 
-    /// 由多个状态合并为1个状态时，此处用于记录合并前的状态
     /// Set of NFA state from which this state is constructed
-	std::set<NFAState*> m_NFAStates;
+    std::set<NFAState*> m_nfa_states;
 
 public:
-	int m_MarkFlag;
+    int m_mark_flag;
 
     //! 0--middle state. 1--start state. 2--final state
     int m_bAcceptingState;
     /// accepting state. used only if m_bAcceptingState is 2
     std::set<int> m_AcceptingState;
+    //used only when m_AcceptingState==FINAL_STATE.
+    std::string m_accepting_regrex;
     
     
 public:
 
     /// parameterized constructor
     /// 传入一个参数，代表状态id
-	NFAState(int nID) : m_nStateID(nID), m_bAcceptingState(0) {};
+    NFAState(int nID) : m_nStateID(nID), m_bAcceptingState(0) {m_mark_flag = 0;};
 
 	//! Constructs new state from the set of other states
 	/*! This is necessary for subset construction algorithm
@@ -74,8 +97,9 @@ public:
 	*/
 	NFAState(std::set<NFAState*> mNFAState, int nID)
 	{
-		m_NFAStates			= mNFAState;
+        m_nfa_states			= mNFAState;
 		m_nStateID			= nID;
+        m_mark_flag = 0;
         updateAcceptingState();
 
     }
@@ -83,11 +107,38 @@ public:
     {
         // DFA state is accepting state if it is constructed from
         // an accepting NFA state
-        m_bAcceptingState	= 0;
+        m_bAcceptingState	= MIDDLE_STATE;
         std::set<NFAState*>::iterator iter;
-        for(iter=m_NFAStates.begin(); iter!=m_NFAStates.end(); ++iter)
-            if((*iter)->m_bAcceptingState!=m_bAcceptingState)
-                m_bAcceptingState |= (*iter)->m_bAcceptingState;
+        for(iter=m_nfa_states.begin(); iter!=m_nfa_states.end(); ++iter)
+        {
+            if((*iter)->m_bAcceptingState==FINAL_STATE)
+            {
+                   m_bAcceptingState =FINAL_STATE;
+                   m_accepting_regrex = (*iter)->m_accepting_regrex;
+                   break;
+            }
+            else if((*iter)->m_bAcceptingState==START_STATE)
+            {
+                m_bAcceptingState =START_STATE;
+                //m_accepting_regrex = (*iter)->m_accepting_regrex;
+                break;
+            }
+        }
+        return 0;
+    }
+
+
+    int ChangeStateID(int oldId,int newId, int depth=0)
+    {
+        if(this->m_nStateID==oldId)
+        {
+            this->m_nStateID=newId;
+        }
+        if(depth>1)return 0;
+        for(auto it=m_transition.begin();it!=m_transition.end();++it)
+        {
+            it->second->ChangeStateID(oldId, newId,depth+1);
+        }
 
         return 0;
     }
@@ -96,17 +147,17 @@ public:
 
 	//! Copy Constructor
 	NFAState(const NFAState &other)
-	{ *this = other; };
+    { *this = other; }
 
 	//! Destructor
-	virtual ~NFAState() {};
+    virtual ~NFAState() {}
 
 
 
     void ClearTransition()
     {
-        m_TransChar.clear();
-        m_Transition.clear();
+        m_trans_char.clear();
+        m_transition.clear();
     }
 
 
@@ -114,12 +165,12 @@ public:
 	void AddTransition(char chInput, NFAState *pState)
 	{
 		assert(pState != NULL);
-		m_TransChar.insert(chInput);
-		m_Transition.insert(std::make_pair(chInput, pState));
+        m_trans_char.insert(chInput);
+        m_transition.insert(std::make_pair(chInput, pState));
     }
 
 
-	std::set<char> GetTransChar(){return m_TransChar;}
+    std::set<int> GetTransChar(){return m_trans_char;}
 
 
 	//! Returns all transitions from this state on specific input
@@ -129,9 +180,9 @@ public:
 		States.clear();
 
 		// Iterate through all values with the key chInput
-		std::multimap<char, NFAState*>::iterator iter;
-		for(iter = m_Transition.lower_bound(chInput);
-			iter!= m_Transition.upper_bound(chInput);
+        std::multimap<int, NFAState*>::iterator iter;
+        for(iter = m_transition.lower_bound(chInput);
+            iter!= m_transition.upper_bound(chInput);
 			++iter)
 			{
 				NFAState *pState = iter->second;
@@ -140,9 +191,9 @@ public:
 				States.insert(pState);
 			}
     }
-	std::multimap<char, NFAState*>* GetTransition()
+    std::multimap<int, NFAState*>* GetTransition()
 	{
-		return &m_Transition;
+        return &m_transition;
     }
 
 
@@ -158,7 +209,7 @@ public:
 		which this DFA state was constructed
 	*/
 	std::set<NFAState*>& GetNFAState()
-	{ return m_NFAStates; };
+    { return m_nfa_states; };
 
 	//! Returns 1 if this state is dead end
 	/*! By dead end I mean that this state is not
@@ -173,7 +224,7 @@ public:
             ///初始态或终止态
 			return 0;
         }
-		if(m_Transition.empty())
+        if(m_transition.empty())
         {
 			return 1;
         }
@@ -184,8 +235,8 @@ public:
             return 0;
         }
 		
-		std::multimap<char, NFAState*>::iterator iter;
-		for(iter=m_Transition.begin(); iter!=m_Transition.end(); ++iter)
+        std::multimap<int, NFAState*>::iterator iter;
+        for(iter=m_transition.begin(); iter!=m_transition.end(); ++iter)
 		{
 			NFAState *toState = iter->second;
 			if(toState != this)
@@ -203,26 +254,26 @@ public:
 	//! Override the assignment operator
 	NFAState& operator=(const NFAState& other)
 	{ 
-		m_Transition	= other.m_Transition; 
+        m_transition	= other.m_transition;
 		m_nStateID		= other.m_nStateID;
-		m_NFAStates		= other.m_NFAStates;
+        m_nfa_states		= other.m_nfa_states;
 
-		m_MarkFlag = other.m_MarkFlag;
+        m_mark_flag = other.m_mark_flag;
         return *this;
     }
 
 	//! Override the comparison operator
 	bool operator==(const NFAState& other)
 	{
-		if(m_NFAStates.empty())
+        if(m_nfa_states.empty())
 			return(m_nStateID == other.m_nStateID);
-		else return(m_NFAStates == other.m_NFAStates);
+        else return(m_nfa_states == other.m_nfa_states);
     }
 };
 
 typedef std::deque<NFAState*> FSA_TABLE;
 typedef std::stack<FSA_TABLE> FSA_STACK;
-
+NFAState* find_fsa_table_final_state(const FSA_TABLE &fsa);
 
 #endif // NFAState_h__
 

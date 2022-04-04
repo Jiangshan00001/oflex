@@ -1,7 +1,7 @@
 #include "NFAState.h"
 #include "ORegexParse.h"
 #include "nfaconvert.h"
-#include "dot_generator.h"
+#include "fsa_to_dot.h"
 
 /// 堆栈方法求值
 /// http://blog.csdn.net/liuhuiyi/article/details/8433203

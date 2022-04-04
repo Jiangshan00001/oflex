@@ -1,18 +1,18 @@
 #include <iostream>
-#include "dot_generator.h"
+#include "fsa_to_dot.h"
 
 #include "nfaconvert.h"
 
 
-std::set<char> GetStatesTransChars(std::set<NFAState*> mNFAs)
+std::set<int> GetStatesTransChars(std::set<NFAState*> mNFAs)
 {
-    std::set<char> mChars;
+    std::set<int> mChars;
     //////////////////////////////////////////////////////////////////////////
     std::set<NFAState*>::iterator itn;
     for (itn=mNFAs.begin();itn!=mNFAs.end();++itn)
     {
         //搜索所有字符
-        std::set<char> mChars1;
+        std::set<int> mChars1;
         mChars1 = (*itn)->GetTransChar();
         mChars.insert(mChars1.begin(), mChars1.end());
     }
@@ -30,45 +30,47 @@ FSA_TABLE NFAConvert::NFAListCont(std::vector<FSA_TABLE> &nfa_list)
     return ret;
 }
 
-FSA_TABLE NFAConvert::NFAtoDFA(FSA_TABLE &nfa)
+FSA_TABLE NFAConvert::NFAtoDFA(FSA_TABLE &nfa, int startId)
 {
-#if 1
     std::set<NFAState*> mNFAs;//一个DFA内部的NFA
 
     FSA_TABLE m_DFATable;
-    int m_nNextStateID = 0;
+    m_nNextStateID = startId-1;
 
     if(nfa.empty())return m_DFATable;
 
-    /// 找到开始状态的eps转换，并设置为未标记
+    /// NFA->DFA algorithm
+
     mNFAs.clear();
+    /// add start nfa state
     mNFAs.insert(nfa[0]);
+    /// get all zero-move nfa states
     mNFAs = MoveZero(mNFAs,mNFAs);
     NFAState *pState = new NFAState(mNFAs, ++m_nNextStateID);
-    pState->m_MarkFlag = 0;
+    pState->m_mark_flag = 0;
 
     m_DFATable.push_back(pState);
 
 
-    /// 将所有未标记的标记，并处理
+    ///
     for (int i=0;i<m_DFATable.size();++i)
     {
-        if (!m_DFATable[i]->m_MarkFlag)
+        if (!m_DFATable[i]->m_mark_flag)
         {
-            m_DFATable[i]->m_MarkFlag = 1;
+            m_DFATable[i]->m_mark_flag = 1;
             ///处理
 
             mNFAs = m_DFATable[i]->GetNFAState();
 
             /////搜索所有字符
-            std::set<char> mChars = GetStatesTransChars(mNFAs);
+            std::set<int> mChars = GetStatesTransChars(mNFAs);
 
             /// 遍历所有字符
-            for (std::set<char>::iterator itc=mChars.begin();itc!=mChars.end();++itc)
+            for (std::set<int>::iterator itc=mChars.begin();itc!=mChars.end();++itc)
             {
                 std::set<NFAState*> mNFAMove;
                 std::set<NFAState*> mNFAEps;
-                if(*itc == 0)continue;//eps character, ignore
+                if(*itc == EPS_CHAR)continue;//eps character, ignore
                 /// MOVE(T,a)
                 mNFAMove = MoveOne(*itc, mNFAs);
                 mNFAEps = MoveZero(mNFAMove, mNFAEps);
@@ -76,7 +78,7 @@ FSA_TABLE NFAConvert::NFAtoDFA(FSA_TABLE &nfa)
                 pState = new NFAState(mNFAEps, ++m_nNextStateID);
                 if(!GetExistState(pState, m_DFATable))
                 {
-                    pState->m_MarkFlag = 0;
+                    pState->m_mark_flag = 0;
                     m_DFATable.push_back(pState);
                     m_DFATable[i]->AddTransition(*itc, pState);
                 }
@@ -87,14 +89,13 @@ FSA_TABLE NFAConvert::NFAtoDFA(FSA_TABLE &nfa)
                 }
             }
 
-            //////////////////////////////////////////////////////////////////////////
-            //i = -1;///重新查找未标记的状态
         }
     }
 
-
+#ifdef DEBUG
     fsa_to_dot(m_DFATable, "dfa_out.dot");
 #endif
+
     return m_DFATable;
 }
 
@@ -158,7 +159,7 @@ FSA_TABLE NFAConvert::DFAmin(FSA_TABLE &dfa)
 
             for(auto j=sub_states.begin();j!=sub_states.end();++j)
             {
-                std::multimap<char, NFAState*>* one_st_trans = (*j)->GetTransition();
+                std::multimap<int, NFAState*>* one_st_trans = (*j)->GetTransition();
                 for (auto k=one_st_trans->begin();k!=one_st_trans->end();++k)
                 {
                     std::set<NFAState*> curr_already_status;
@@ -231,7 +232,7 @@ FSA_TABLE NFAConvert::DFAmin(FSA_TABLE &dfa)
 
 }
 
-std::set<NFAState*> NFAConvert::MoveOne(char mC, std::set<NFAState*> mNFAs)
+std::set<NFAState*> NFAConvert::MoveOne(int mC, std::set<NFAState*> mNFAs)
 {
     std::set<NFAState*> mRes;
 
@@ -257,7 +258,7 @@ std::set<NFAState*> NFAConvert::MoveZero(std::set<NFAState*> &mNFAs, std::set<NF
     while (!mRes1Bak.empty())
     {
         mResNeedRefresh.clear();
-        mResCurr = MoveOne(0, mRes1Bak);///新生成的
+        mResCurr = MoveOne(EPS_CHAR, mRes1Bak);///新生成的
 
         for (std::set<NFAState*>::iterator it2=mResCurr.begin();it2!=mResCurr.end();++it2)
         {

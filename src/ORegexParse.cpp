@@ -1,6 +1,6 @@
 #include <iostream>
 #include "ORegexParse.h"
-#include "dot_generator.h"
+#include "fsa_to_dot.h"
 
 using namespace std;
 
@@ -70,7 +70,7 @@ int ORegexParse::PushOneDot(FSA_STACK &dst)
     return 0;
 }
 
-int ORegexParse::PushOneByte(char chInput, FSA_STACK &dst)
+int ORegexParse::PushOneByte(int chInput, FSA_STACK &dst)
 {
     // Create 2 new states on the heap
     NFAState *s0 = new NFAState(++m_nNextStateID);
@@ -93,6 +93,82 @@ int ORegexParse::PushOneByte(char chInput, FSA_STACK &dst)
 }
 
 
+bool ORegexParse::OPRWhy(FSA_STACK &stk)
+{
+    // Pop 1 element
+    FSA_TABLE A;
+    if(!NFAStackPop(stk, A))
+        return 0;
+
+    // Now evaluate A?
+    // Create 2 new states which will be inserted
+    // at each end of deque. Also take A and make
+    // a epsilon transition from last to the first
+    // state in the queue. Add epsilon transition
+    // between two new states so that the one inserted
+    // at the begin will be the source and the one
+    // inserted at the end will be the destination
+    NFAState *pStartState	= new NFAState(++m_nNextStateID);
+    NFAState *pEndState	= new NFAState(++m_nNextStateID);
+    pStartState->AddTransition(EPS_CHAR, pEndState);
+
+    // add epsilon transition from start state to the first state of A
+    pStartState->AddTransition(EPS_CHAR, A[0]);
+    pStartState->AddTransition(EPS_CHAR, A[A.size()-1]);
+
+    // add epsilon transition from A last state to end state
+    A[A.size()-1]->AddTransition(EPS_CHAR, pEndState);
+
+    // construct new DFA and store it onto the stack
+    A.push_back(pEndState);
+    A.push_front(pStartState);
+
+    // Push the result onto the stack
+    NFAStackPush(stk, A);
+
+    TRACE("WHY\n");
+
+    return 1;
+}
+bool ORegexParse::OPRPlus(FSA_STACK &stk)
+{
+    // Pop 1 element
+    FSA_TABLE A;
+    if(!NFAStackPop(stk, A))
+        return 0;
+
+    // Now evaluate A+
+    // Create 2 new states which will be inserted
+    // at each end of deque. Also take A and make
+    // a epsilon transition from last to the first
+    // state in the queue. Add epsilon transition
+    // between two new states so that the one inserted
+    // at the begin will be the source and the one
+    // inserted at the end will be the destination
+    NFAState *pStartState	= new NFAState(++m_nNextStateID);
+    NFAState *pEndState	= new NFAState(++m_nNextStateID);
+
+    // add epsilon transition from start state to the first state of A
+    pStartState->AddTransition(EPS_CHAR, A[0]);
+
+
+    // add epsilon transition from A last state to end state
+    A[A.size()-1]->AddTransition(EPS_CHAR, pEndState);
+    A[A.size()-1]->AddTransition(EPS_CHAR, pStartState);
+
+    // construct new DFA and store it onto the stack
+    A.push_back(pEndState);
+    A.push_front(pStartState);
+
+    // Push the result onto the stack
+    NFAStackPush(stk, A);
+
+    TRACE("Plus\n");
+
+    return 1;
+}
+
+
 bool ORegexParse::Concat(FSA_STACK &stk)
 {
 	// Pop 2 elements
@@ -105,7 +181,7 @@ bool ORegexParse::Concat(FSA_STACK &stk)
 	// and add an epsilon transition to the
 	// first state of B. Store the result into
 	// new NFA_TABLE and push it onto the stack
-	A[A.size()-1]->AddTransition(0, B[0]);
+    A[A.size()-1]->AddTransition(EPS_CHAR, B[0]);
 	A.insert(A.end(), B.begin(), B.end());
 	
 	// Push the result onto the stack
@@ -133,16 +209,16 @@ bool ORegexParse::Star(FSA_STACK &stk)
 	// inserted at the end will be the destination
 	NFAState *pStartState	= new NFAState(++m_nNextStateID);
 	NFAState *pEndState	= new NFAState(++m_nNextStateID);
-	pStartState->AddTransition(0, pEndState);
+    pStartState->AddTransition(EPS_CHAR, pEndState);
 	
 	// add epsilon transition from start state to the first state of A
-	pStartState->AddTransition(0, A[0]);
+    pStartState->AddTransition(EPS_CHAR, A[0]);
 	
 	// add epsilon transition from A last state to end state
-	A[A.size()-1]->AddTransition(0, pEndState);
+    A[A.size()-1]->AddTransition(EPS_CHAR, pEndState);
 	
 	// From A last to A first state
-	A[A.size()-1]->AddTransition(0, A[0]);
+    A[A.size()-1]->AddTransition(EPS_CHAR, A[0]);
 	
 	// construct new DFA and store it onto the stack
 	A.push_back(pEndState);
@@ -171,10 +247,10 @@ bool ORegexParse::Union(FSA_STACK &stk)
 	// states of A and B to the new end state
 	NFAState *pStartState	= new NFAState(++m_nNextStateID);
 	NFAState *pEndState	= new NFAState(++m_nNextStateID);
-	pStartState->AddTransition(0, A[0]);
-	pStartState->AddTransition(0, B[0]);
-	A[A.size()-1]->AddTransition(0, pEndState);
-	B[B.size()-1]->AddTransition(0, pEndState);
+    pStartState->AddTransition(EPS_CHAR, A[0]);
+    pStartState->AddTransition(EPS_CHAR, B[0]);
+    A[A.size()-1]->AddTransition(EPS_CHAR, pEndState);
+    B[B.size()-1]->AddTransition(EPS_CHAR, pEndState);
 	
 	// Create new NFA from A
 	B.push_back(pEndState);
@@ -230,6 +306,15 @@ bool ORegexParse::Eval(FSA_STACK &OperandStack, std::stack<char> &OperatorStack)
         case   OPERATOR_CONCAT:
             return Concat(OperandStack);
 			break;
+        case OPERATOR_WHY:
+            return OPRWhy(OperandStack);
+            break;
+        case OPERATOR_PLUS:
+            return OPRPlus(OperandStack);
+            break;
+        default:
+            std::cerr<<"ORegexParse::Eval: unknown opr:"<<chOperator<<std::endl;
+            break;
 		}
 		
 		return 0;
@@ -342,7 +427,9 @@ FSA_TABLE ORegexParse::CreateNFA(string strRegEx, int startId)
     return m_NFATable;
 }
 
-FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
+
+#if 0
+FSA_TABLE ORegexParse::CreateNFAFlexTmp(string strRegEx, int startId)
 {
 
     ///TODO: "/*" 此字符串，需要解码到"时，认为是一个类似()的算符，内部的字符都是连接在一起的
@@ -356,7 +443,7 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
     cout<< strRegEx<<endl;
 #endif
 
-    strRegEx = strRegEx;//)
+    strRegEx = strRegEx;
 
 #if DEBUG_ALL
     cout<<"after ConcatExpand"<<strRegEx.size()<<": "<< strRegEx<<endl;
@@ -524,3 +611,222 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
 
 }
 
+#endif
+
+
+FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
+{
+
+#if DEBUG_ALL
+    cout<< strRegEx<<endl;
+#endif
+
+    strRegEx = strRegEx;
+
+
+    FSA_TABLE mNFATable;
+
+    FSA_STACK OperandStack;
+    std::stack<char> OperatorStack;
+
+    m_nNextStateID = startId-1;
+
+    // Create 1 start states on the heap
+    NFAState *s0 = new NFAState(++m_nNextStateID);
+    s0->m_bAcceptingState=START_STATE;
+
+
+    // Create a NFA from these 2 states
+    FSA_TABLE startNFATable;
+    startNFATable.push_back(s0);
+
+    // push it onto the operand stack
+    OperandStack.push(startNFATable);
+    OperatorStack.push(OPERATOR_CONCAT);
+
+
+    int curr_status=0;//1--dquote. 0--normal
+
+
+    for(int i=0; i<strRegEx.size(); ++i)
+    {
+        // get the character
+        char c = strRegEx[i];
+
+
+
+#if DEBUG_ALL
+        cout<<"i="<<i<<endl;
+#endif
+        if (curr_status==1)
+        {
+            ///dquote mode
+            /// just concat all characters
+
+            if(c == OPERATOR_DQUOTE)
+            {
+                curr_status=0;
+                OperatorStack.pop();
+                while(OperatorStack.top()!=OPERATOR_DQUOTE)
+                    Eval(OperandStack, OperatorStack);
+                OperatorStack.pop();
+                continue;
+            }
+            if(c=='\\')
+            {
+                ++i;
+                c = strRegEx[i];
+                //PushOneByte(c, OperandStack);
+                //continue;
+            }
+
+            PushOneByte(c, OperandStack);
+            OperatorStack.push(OPERATOR_CONCAT);
+            continue;
+        }
+        else if (curr_status==2)
+        {
+            //中括号[]
+            if (c==OPERATOR_RIGHTMID)
+            {
+                OperatorStack.pop();
+                while(OperatorStack.top()!=OPERATOR_LEFTMID)
+                    Eval(OperandStack, OperatorStack);
+                OperatorStack.pop();
+                curr_status=0;
+                continue;
+            }
+            if (c=='-')
+            {
+                char c1=strRegEx[i-1];
+                char c2=strRegEx[i+1];
+                for(int cc=c1+1;cc<c2;++cc)
+                {
+                    PushOneByte((char)cc, OperandStack);
+                    OperatorStack.push(OPERATOR_UNION);
+                }
+                continue;
+            }
+            if(c=='\\')
+            {
+                ++i;
+                c = strRegEx[i];
+                //PushOneByte(c, OperandStack);
+                //continue;
+            }
+
+            //中括号
+            PushOneByte(c, OperandStack);
+            OperatorStack.push(OPERATOR_UNION);
+            continue;
+        }
+        else
+        {
+            //normal mode
+            if(IsInput(c))///有一个字符，生成合集并放入操作数堆栈
+            {
+                if(c=='\\')
+                {
+                    ++i;
+                    c = strRegEx[i];
+                    //PushOneByte(c, OperandStack);
+                    //continue;
+                }
+
+                PushOneByte(c, OperandStack);
+            }
+            else if(IsLeftParanthesis(c))///左括号
+            {
+                OperatorStack.push(c);
+            }
+            else if(IsRightParanthesis(c))///右括号
+            {
+                // Evaluate everyting in paranthesis
+                while(!IsLeftParanthesis(OperatorStack.top()))
+                    if(!Eval(OperandStack, OperatorStack))
+                        return mNFATable;
+                    // Remove left paranthesis after the evaluation
+                    OperatorStack.pop();
+            }
+            else if(c == OPERATOR_DQUOTE)
+            {
+                ///双引号
+                ///
+                OperatorStack.push(OPERATOR_DQUOTE);
+                curr_status=1;
+                continue;
+            }
+            else if (c==OPERATOR_DOT)
+            {
+                PushOneDot(OperandStack);
+                continue;
+            }
+            else if (c==OPERATOR_LEFTMID)
+            {
+                OperatorStack.push(OPERATOR_LEFTMID);
+                curr_status=2;
+                continue;
+            }
+            else if (c==OPERATOR_PLUS)
+            {//1个或多个
+                OperatorStack.push(c);
+            }
+            else if (c==OPERATOR_WHY)
+            {//0个或1个
+                OperatorStack.push(c);
+            }
+            else if(OperatorStack.empty())/// 如果算符为空，直接放入
+            {
+                OperatorStack.push(c);
+            }
+            else
+            {
+                /// 如果之前已经有算符了，并且当前算符不是括号
+                while(!OperatorStack.empty() && Presedence(c, OperatorStack.top()))
+                {///如果内部原有算符，且当前算符的优先级小，则先计算
+                    if(!Eval(OperandStack, OperatorStack))
+                        return mNFATable;
+                }
+                OperatorStack.push(c);
+            }
+        }
+
+
+    }
+
+    // Evaluate the rest of operators
+    while(!OperatorStack.empty())
+    {
+        if(!Eval(OperandStack, OperatorStack))
+            return mNFATable;
+    }
+
+    // Pop the result from the stack
+    if(!NFAStackPop(OperandStack, mNFATable))
+    {
+        return mNFATable;
+    }
+
+    // Last NFA state is always accepting state
+    mNFATable[mNFATable.size()-1]->m_bAcceptingState |= FINAL_STATE;
+    mNFATable[mNFATable.size()-1]->m_accepting_regrex=strRegEx;
+
+    int start_state_id = mNFATable[0]->m_nStateID;
+    int final_state_id = mNFATable[mNFATable.size()-1]->m_nStateID;
+
+#if 0
+    if (start_state_id+1< final_state_id)
+    {
+
+        //m_nNextStateID this should be the last id
+        mNFATable[0]->ChangeStateID(final_state_id, final_state_id+2);
+        mNFATable[0]->ChangeStateID(start_state_id+1, final_state_id);
+        mNFATable[0]->ChangeStateID(final_state_id+2, start_state_id+1);
+
+    }
+#endif
+
+
+    return mNFATable;
+
+}

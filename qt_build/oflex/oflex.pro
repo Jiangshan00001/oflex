@@ -22,7 +22,6 @@ DEFINES += QT_BUILD
 INCLUDEPATH += ../../src/ ../../src/util
 
 SOURCES += \
-    ../../src/dot_generator.cpp \
     ../../src/main.cpp \
     ../../src/NFAState.cpp \
     ../../src/ORegexList.cpp \
@@ -36,10 +35,10 @@ SOURCES += \
     ../../src/util/str2number.cpp \
     ../../src/util/split.cpp \
     ../../src/util/replace.cpp \
-    ../../src/util/mylog.cpp
+    ../../src/util/mylog.cpp \
+    ../../src/fsa_to_dot.cpp
 
 HEADERS += \
-    ../../src/dot_generator.h \
     ../../src/NFAState.h \
     ../../src/ORegexList.h \
     ../../src/ORegexParse.h \
@@ -52,4 +51,5 @@ HEADERS += \
     ../../src/util/str2number.h \
     ../../src/util/split.h \
     ../../src/util/replace.h \
-    ../../src/util/mylog.h
+    ../../src/util/mylog.h \
+    ../../src/fsa_to_dot.h

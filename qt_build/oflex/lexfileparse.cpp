@@ -207,6 +207,10 @@ unsigned find_block_end(const std::string &file_cont, unsigned ipos)
     int block_num=0;
     while(ipos+1<file_cont.size())
     {
+        ipos = skip_pair(file_cont, ipos,'\'','\'');
+        ipos = skip_pair(file_cont, ipos,'\"','\"');
+        //ipos = skip_pair(file_cont, ipos,'(',')');
+        //ipos = skip_pair(file_cont, ipos,'[',']');
         if (file_cont[ipos]=='{')
         {
             block_num++;
@@ -350,6 +354,11 @@ int lex_file_parse2(const string &file_cont, std::vector<std::map<string, string
 
 
             start = ipos;
+            ipos = skip_pair(file_cont, ipos, '"','"');
+            ipos = skip_pair(file_cont, ipos, '[',']');
+            ipos = skip_pair(file_cont, ipos, '{','}');
+            ipos = skip_pair(file_cont, ipos, '(',')');
+
             ipos = skip_to_blank(file_cont, ipos);
             end = ipos;
             regex_key.assign(file_cont.begin()+start, file_cont.begin()+end);
@@ -366,7 +375,7 @@ int lex_file_parse2(const string &file_cont, std::vector<std::map<string, string
             regex_str= trim(regex_str);
 
             if(regex_key.size()>0)
-                regex_temp[regex_key]=regex_str;
+                regex_temp[regex_key]=render_regex(regex_str, regex_temp);
         }
         else if(curr_mode==1)
         {
@@ -380,6 +389,12 @@ int lex_file_parse2(const string &file_cont, std::vector<std::map<string, string
 
             ipos = skip_to_nblank(file_cont, ipos);
             start = ipos;
+
+            ipos = skip_pair(file_cont, ipos, '"','"');
+            ipos = skip_pair(file_cont, ipos, '[',']');
+            ipos = skip_pair(file_cont, ipos, '{','}');
+            ipos = skip_pair(file_cont, ipos, '(',')');
+
             ipos = skip_to_blank(file_cont, ipos);
             end = ipos;
             regex_key.assign(file_cont.begin()+start, file_cont.begin()+end);
@@ -414,6 +429,7 @@ int lex_file_parse2(const string &file_cont, std::vector<std::map<string, string
         }
         else if(curr_mode==2)
         {
+            //end_codes
             add_code.assign(file_cont.begin()+ipos, file_cont.end());
             add_code=trim1(add_code,'\0');
             ipos = file_cont.size();

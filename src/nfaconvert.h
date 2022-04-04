@@ -11,16 +11,17 @@ public:
     ///多个合1个
     FSA_TABLE NFAListCont(std::vector<FSA_TABLE> &nfa_list);
     /// NFA转DFA
-    FSA_TABLE NFAtoDFA(FSA_TABLE &nfa);
+    FSA_TABLE NFAtoDFA(FSA_TABLE &nfa, int startId);
     /// DFA最小化
     FSA_TABLE DFAmin(FSA_TABLE &dfa);
 
+    int m_nNextStateID;
 private:
 
 
 
     /// mC=0时，为eps的跳转
-    std::set<NFAState*> MoveOne(char mC, std::set<NFAState*> mNFAs);
+    std::set<NFAState*> MoveOne(int mC, std::set<NFAState*> mNFAs);
     //所有通过eps能相互连在一起的
     std::set<NFAState*> MoveZero(std::set<NFAState *> &mNFAs, std::set<NFAState*> &mRes1);
 
