@@ -22,13 +22,6 @@ endif()
 include_directories(src)
 
 
-
-#source directory
-aux_source_directory(src SRC_LISTA)
-
-add_executable(oflex ${SRC_LISTA})
-
-
-
-
+add_subdirectory(src)
+add_subdirectory(test)
 

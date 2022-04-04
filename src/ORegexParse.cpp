@@ -642,7 +642,6 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
 
     // push it onto the operand stack
     OperandStack.push(startNFATable);
-    OperatorStack.push(OPERATOR_CONCAT);
 
 
     int curr_status=0;//1--dquote. 0--normal
@@ -652,9 +651,6 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
     {
         // get the character
         char c = strRegEx[i];
-
-
-
 #if DEBUG_ALL
         cout<<"i="<<i<<endl;
 #endif
@@ -732,7 +728,9 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
                     //PushOneByte(c, OperandStack);
                     //continue;
                 }
-
+                /// add one byte. add one operator.
+                /// concat with last char
+                OperatorStack.push(OPERATOR_CONCAT);
                 PushOneByte(c, OperandStack);
             }
             else if(IsLeftParanthesis(c))///左括号

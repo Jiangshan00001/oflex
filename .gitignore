@@ -6,3 +6,5 @@ src/regrex_lex.includes
 src/regrex_lex.config
 qt_build/*
 *.bak
+build/*
+test/tmp/*

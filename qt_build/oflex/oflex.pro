@@ -36,7 +36,8 @@ SOURCES += \
     ../../src/util/split.cpp \
     ../../src/util/replace.cpp \
     ../../src/util/mylog.cpp \
-    ../../src/fsa_to_dot.cpp
+    ../../src/fsa_to_dot.cpp \
+    ../../src/mytests.cpp
 
 HEADERS += \
     ../../src/NFAState.h \
@@ -52,4 +53,6 @@ HEADERS += \
     ../../src/util/split.h \
     ../../src/util/replace.h \
     ../../src/util/mylog.h \
-    ../../src/fsa_to_dot.h
+    ../../src/fsa_to_dot.h \
+    ../../src/mytests.h \
+    ../../src/util/argv.h

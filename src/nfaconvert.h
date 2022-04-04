@@ -11,7 +11,7 @@ public:
     ///多个合1个
     FSA_TABLE NFAListCont(std::vector<FSA_TABLE> &nfa_list);
     /// NFA转DFA
-    FSA_TABLE NFAtoDFA(FSA_TABLE &nfa, int startId);
+    FSA_TABLE NFAtoDFA(FSA_TABLE &nfa, int startId=0);
     /// DFA最小化
     FSA_TABLE DFAmin(FSA_TABLE &dfa);
 

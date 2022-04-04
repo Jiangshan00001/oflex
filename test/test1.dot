@@ -1,0 +1,27 @@
+digraph G {
+subgraph cluster_0 {
+style=filled;
+color=lightgrey;
+0[shape=circle color=green]
+label=cluster0;
+}
+subgraph cluster_1 {
+style=filled;
+color=lightgrey;
+label=cluster1;
+}
+subgraph cluster_2 {
+style=filled;
+color=lightgrey;
+label=cluster2;
+}
+subgraph cluster_3 {
+style=filled;
+color=lightgrey;
+3[shape=doublecircle color=red]
+label=cluster3;
+}
+0->1[label= "a" ]
+1->2[label= "b" ]
+2->3[label= "c" ]
+}
