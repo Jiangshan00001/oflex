@@ -55,14 +55,26 @@ std::string fsa_to_dot_ss(FSA_TABLE & fsa)
 
 
             char mT[4]={0,0,0,0};
-            if(it->first==EPS_CHAR)
+            int val = it->first;
+            if(val==EPS_CHAR)
             {
                 mT[0] = 'E';
                 mT[1] = 'p';
                 mT[2] = 's';
             }
+            else if(!((val>=0x20)&&(val<=0x7e)))
+            {
+                //convert to number
+                int b = (val/100)%10;
+                int s = (val/10 )%10;
+                int g = val%10;
+                mT[0] = b+'0';
+                mT[1] = s+'0';
+                mT[2] = g+'0';
+            }
             else
             {
+
                 if(it->first=='"')
                 {
                     mT[0] = '\\';

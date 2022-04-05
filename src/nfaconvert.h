@@ -13,7 +13,7 @@ public:
     /// NFA转DFA
     FSA_TABLE NFAtoDFA(FSA_TABLE &nfa, int startId=0);
     /// DFA最小化
-    FSA_TABLE DFAmin(FSA_TABLE &dfa);
+    FSA_TABLE DFAmin(FSA_TABLE &dfa, int start_id=0);
 
     int m_nNextStateID;
 private:

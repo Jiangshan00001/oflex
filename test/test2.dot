@@ -1,2 +1,22 @@
 digraph G {
+subgraph cluster_0 {
+style=filled;
+color=lightgrey;
+label=cluster0;
+}
+subgraph cluster_1 {
+style=filled;
+color=lightgrey;
+1[shape=doublecircle color=red]
+label=cluster1;
+}
+subgraph cluster_2 {
+style=filled;
+color=lightgrey;
+2[shape=circle color=green]
+label=cluster2;
+}
+0->1[label= "c" ]
+2->1[label= "a" ]
+2->0[label= "b" ]
 }

@@ -3,6 +3,8 @@
 
 #include "nfaconvert.h"
 
+//online converter:
+//https://hritikbhandari.me/NFA-to-DFA-Converter/
 
 std::set<int> GetStatesTransChars(std::set<NFAState*> mNFAs)
 {
@@ -117,13 +119,13 @@ NFAState* GetDfaFromNfa(NFAState* nfa_state, FSA_TABLE &dfa)
     return NULL;
 }
 
-FSA_TABLE NFAConvert::DFAmin(FSA_TABLE &dfa)
+FSA_TABLE NFAConvert::DFAmin(FSA_TABLE &dfa, int start_id)
 {
     FSA_TABLE dfa_min;
 
     if (dfa.empty())return dfa_min;
 
-    int id=0;
+    m_nNextStateID=start_id-1;
 
     //将状态分2组，可接受状态和非可接受状态
     std::set<NFAState*> st_acc;
@@ -141,8 +143,8 @@ FSA_TABLE NFAConvert::DFAmin(FSA_TABLE &dfa)
         }
     }
 
-    dfa_min.push_back(new NFAState(st_not_acc,++id ));
-    dfa_min.push_back(new NFAState(st_acc,++id ));
+    dfa_min.push_back(new NFAState(st_not_acc,++m_nNextStateID ));
+    dfa_min.push_back(new NFAState(st_acc,++m_nNextStateID ));
 
     int is_changed=0;
 
@@ -191,7 +193,7 @@ FSA_TABLE NFAConvert::DFAmin(FSA_TABLE &dfa)
                         std::set<NFAState*> stn;
                         stn.insert(*j);
                         sub_states.erase(j);
-                        dfa_min.push_back(new NFAState(stn,++id ));
+                        dfa_min.push_back(new NFAState(stn,++m_nNextStateID ));
                         break;
                     }
                 }

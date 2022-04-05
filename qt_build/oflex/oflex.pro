@@ -29,7 +29,7 @@ SOURCES += \
     ../../src/util/num2str.cpp \
     main_qt.cpp \
     ../../src/nfaconvert.cpp \
-    lexfileparse.cpp \
+    ../../src/lexfileparse.cpp \
     ../../src/util/trim.cpp \
     ../../src/util/string_eval.cpp \
     ../../src/util/str2number.cpp \
@@ -45,7 +45,7 @@ HEADERS += \
     ../../src/ORegexParse.h \
     ../../src/nfaconvert.h \
     ../../src/util/num2str.h \
-    lexfileparse.h \
+    ../../src/lexfileparse.h \
     ../../test/quut_com_ansi_c.l \
     ../../src/util/trim.h \
     ../../src/util/string_eval.h \

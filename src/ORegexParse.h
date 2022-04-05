@@ -55,6 +55,7 @@ private:
 	///将一个字符，装换为一个状态合集，放入operand stack	
     int PushOneByte(int chInput, FSA_STACK &dst);
 
+    int PushMiddleLR(std::vector<int> chars, int is_inv, FSA_STACK &dst);
 
 
 	//! Evaluates the concatenation operator
@@ -110,20 +111,26 @@ private:
 	/// 查看优先级，如果opLeft<=opRight 则返回1，否则返回0
 	//! Returns operator presedence
 	/*! Returns 1 if presedence of opLeft <= opRight.
+     *  Returns 1 if have to calc prev op first.
+     *opLeft=curr op
+     *opRight=prev op
 	
 			Kleens Closure	- highest ()
+            * ? +
 			Concatenation	- middle  ab
 			Union			- lowest  |
+
+             foo|bar*  -->(foo)|(ba(r*))
 	*/
 	bool Presedence(char opLeft, char opRight)
 	{
 		if(opLeft == opRight)
 			return 1;
 
-		if(opLeft == OPERATOR_STAR)/// star优先级最高
+        if((opLeft == OPERATOR_STAR)||(opLeft == OPERATOR_WHY)||(opLeft == OPERATOR_PLUS))/// star优先级最高
 			return 0;
 
-		if(opRight == OPERATOR_STAR)
+        if((opRight == OPERATOR_STAR)||(opRight == OPERATOR_WHY)||(opRight == OPERATOR_PLUS))
 			return 1;
 
 		if(opLeft == OPERATOR_CONCAT)///优先级中等

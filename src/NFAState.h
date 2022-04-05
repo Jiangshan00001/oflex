@@ -162,7 +162,7 @@ public:
 
 
 	//! Adds a transition from this state to the other
-	void AddTransition(char chInput, NFAState *pState)
+    void AddTransition(int chInput, NFAState *pState)
 	{
 		assert(pState != NULL);
         m_trans_char.insert(chInput);

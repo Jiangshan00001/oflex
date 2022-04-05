@@ -10,6 +10,21 @@
 #include "string_eval.h"
 #include "mytests.h"
 
+int main(int argc, char *argv[])
+{
+    //string parse
+    ORegexParse mRegex;
+    NFAConvert mConvert;
+
+    FSA_TABLE nfa = mRegex.CreateNFAFlex("[^1-9]+");
+    fsa_to_dot(nfa, "nfa1.dot");
+    FSA_TABLE dfa = mConvert.NFAtoDFA(nfa);
+    fsa_to_dot(dfa, "dfa1.dot");
+    FSA_TABLE dfamin = mConvert.DFAmin(dfa);
+    fsa_to_dot(dfamin, "dfa_min1.dot");
+    return 0;
+}
+
 #if 0
 int test_lex(std::string file_name, std::string file_out)
 {

@@ -49,6 +49,7 @@ std::string lex_file_out(std::string includes, std::string add_code, std::vector
         fsa_to_dot(nfa, num2str(i)+"nfa"+".dot");
 
         FSA_TABLE dfa = mConvert.NFAtoDFA(nfa,start_id);
+        FSA_TABLE dfamin = mConvert.DFAmin(dfa, start_id);
         start_id = mConvert.m_nNextStateID+1;
 
         fsa_to_dot(dfa, num2str(i)+"dfa"+".dot");
@@ -155,7 +156,7 @@ std::string lex_file_out(std::string includes, std::string add_code, std::vector
 }
 
 
-#if 1
+#ifndef QT_BUILD
 /// -s abcd -d dfa.dot -o out.c -i input_lex.l
 int main(int argc, char *argv[])
 {
@@ -178,7 +179,8 @@ int main(int argc, char *argv[])
 
         FSA_TABLE nfa = mRegex.CreateNFAFlex(istr);
         FSA_TABLE dfa = mConvert.NFAtoDFA(nfa);
-        fsa_to_dot(dfa, out_dot_file_name);
+        FSA_TABLE dfamin = mConvert.DFAmin(dfa);
+        fsa_to_dot(dfamin, out_dot_file_name);
         return 0;
     }
     if(parse.HaveOption('i'))

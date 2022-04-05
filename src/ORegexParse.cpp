@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include "ORegexParse.h"
 #include "fsa_to_dot.h"
 
@@ -68,6 +69,45 @@ int ORegexParse::PushOneDot(FSA_STACK &dst)
     dst.push(NFATable);
 
     return 0;
+}
+int ORegexParse::PushMiddleLR(std::vector<int> chars, int is_inv,FSA_STACK &dst)
+{
+    // Create 2 new states on the heap
+    NFAState *s0 = new NFAState(++m_nNextStateID);
+    NFAState *s1 = new NFAState(++m_nNextStateID);
+
+    if(is_inv)
+    {
+        for(int i=0;i<256;++i)
+        {
+            if (std::find(chars.begin(), chars.end(),i)!= chars.end())
+            {
+                continue;
+            }
+            // Add the transition from s0->s1 on input character
+            s0->AddTransition(i, s1);
+        }
+    }
+    else
+    {
+        for(int i=0;i<chars.size();++i)
+        {// Add the transition from s0->s1 on input character
+            s0->AddTransition(chars[i], s1);
+        }
+    }
+
+    // Create a NFA from these 2 states
+    FSA_TABLE NFATable;
+    NFATable.push_back(s0);
+    NFATable.push_back(s1);
+
+
+    // push it onto the operand stack
+    dst.push(NFATable);
+
+    TRACE("PushMiddleLR %c\n", is_inv);
+    return 0;
+
 }
 
 int ORegexParse::PushOneByte(int chInput, FSA_STACK &dst)
@@ -635,16 +675,20 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
     NFAState *s0 = new NFAState(++m_nNextStateID);
     s0->m_bAcceptingState=START_STATE;
 
-
+    // change start state to add in the end of the regrex parse.
     // Create a NFA from these 2 states
     FSA_TABLE startNFATable;
     startNFATable.push_back(s0);
 
     // push it onto the operand stack
-    OperandStack.push(startNFATable);
+    //OperandStack.push(startNFATable);
 
 
     int curr_status=0;//1--dquote. 0--normal
+    int push_one_opd=0;// pushOperand=1. pushOperator=0
+
+    std::vector<int> status_middle_left_chars;//store [] chars
+    int status_middle_left_inv=0;
 
 
     for(int i=0; i<strRegEx.size(); ++i)
@@ -675,46 +719,71 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
                 //PushOneByte(c, OperandStack);
                 //continue;
             }
-
+            if(push_one_opd)OperatorStack.push(OPERATOR_CONCAT);
             PushOneByte(c, OperandStack);
-            OperatorStack.push(OPERATOR_CONCAT);
+            push_one_opd=1;
+
             continue;
         }
         else if (curr_status==2)
         {
+            if (c=='^')
+            {
+                status_middle_left_inv=1;
+                continue;
+            }
             //中括号[]
+
+            if (c=='-')
+            {
+                ///A-Z. when parse -, A already pushed to operand stack.
+                //OperandStack.pop();
+                //push_one_opd=0;
+                status_middle_left_chars.pop_back();
+
+                unsigned char c1=strRegEx[i-1];
+                unsigned char c2=strRegEx[i+1];
+                for(int cc=c1;cc<=c2;++cc)
+                {
+                    status_middle_left_chars.push_back(cc);
+                    //PushOneByte((int)cc, OperandStack);
+                    //if(cc!=c2-1)OperatorStack.push(OPERATOR_UNION);
+                }
+                ++i;//skip c2
+                continue;
+            }
             if (c==OPERATOR_RIGHTMID)
             {
-                OperatorStack.pop();
-                while(OperatorStack.top()!=OPERATOR_LEFTMID)
-                    Eval(OperandStack, OperatorStack);
-                OperatorStack.pop();
+                if(push_one_opd)OperatorStack.push(OPERATOR_UNION);
+                PushMiddleLR(status_middle_left_chars, status_middle_left_inv,OperandStack);
+                push_one_opd=1;
+                //中括号
+                //while(OperatorStack.top()!=OPERATOR_LEFTMID)
+                //    Eval(OperandStack, OperatorStack);
+                OperatorStack.pop();//pop [ operator
+
+
                 curr_status=0;
                 continue;
             }
-            if (c=='-')
-            {
-                char c1=strRegEx[i-1];
-                char c2=strRegEx[i+1];
-                for(int cc=c1+1;cc<c2;++cc)
-                {
-                    PushOneByte((char)cc, OperandStack);
-                    OperatorStack.push(OPERATOR_UNION);
-                }
-                continue;
-            }
+
             if(c=='\\')
             {
                 ++i;
                 c = strRegEx[i];
-                //PushOneByte(c, OperandStack);
-                //continue;
             }
 
-            //中括号
-            PushOneByte(c, OperandStack);
-            OperatorStack.push(OPERATOR_UNION);
+
+            //if(push_one_opd)OperatorStack.push(OPERATOR_UNION);
+            //push_one_opd=0;
+            //PushOneByte(c, OperandStack);
+            //push_one_opd=1;
+            status_middle_left_chars.push_back(c);
+
             continue;
+#if 0
+
+#endif
         }
         else
         {
@@ -730,12 +799,15 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
                 }
                 /// add one byte. add one operator.
                 /// concat with last char
-                OperatorStack.push(OPERATOR_CONCAT);
+                if(push_one_opd)OperatorStack.push(OPERATOR_CONCAT);
+                push_one_opd=0;
                 PushOneByte(c, OperandStack);
+                push_one_opd=1;
             }
             else if(IsLeftParanthesis(c))///左括号
             {
                 OperatorStack.push(c);
+                push_one_opd=0;
             }
             else if(IsRightParanthesis(c))///右括号
             {
@@ -746,37 +818,6 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
                     // Remove left paranthesis after the evaluation
                     OperatorStack.pop();
             }
-            else if(c == OPERATOR_DQUOTE)
-            {
-                ///双引号
-                ///
-                OperatorStack.push(OPERATOR_DQUOTE);
-                curr_status=1;
-                continue;
-            }
-            else if (c==OPERATOR_DOT)
-            {
-                PushOneDot(OperandStack);
-                continue;
-            }
-            else if (c==OPERATOR_LEFTMID)
-            {
-                OperatorStack.push(OPERATOR_LEFTMID);
-                curr_status=2;
-                continue;
-            }
-            else if (c==OPERATOR_PLUS)
-            {//1个或多个
-                OperatorStack.push(c);
-            }
-            else if (c==OPERATOR_WHY)
-            {//0个或1个
-                OperatorStack.push(c);
-            }
-            else if(OperatorStack.empty())/// 如果算符为空，直接放入
-            {
-                OperatorStack.push(c);
-            }
             else
             {
                 /// 如果之前已经有算符了，并且当前算符不是括号
@@ -786,6 +827,15 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
                         return mNFATable;
                 }
                 OperatorStack.push(c);
+                push_one_opd=0;
+                if (c==OPERATOR_LEFTMID)
+                {
+                    curr_status=2;
+                    status_middle_left_inv=0;
+                    status_middle_left_chars.clear();
+                    continue;
+                }
+                else if(c==OPERATOR_DQUOTE)curr_status=1;
             }
         }
 
@@ -804,6 +854,14 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
     {
         return mNFATable;
     }
+    OperandStack.push(startNFATable);
+    OperandStack.push(mNFATable);
+    OperatorStack.push(OPERATOR_CONCAT);
+    Eval(OperandStack, OperatorStack);
+    NFAStackPop(OperandStack, mNFATable);
+
+
+
 
     // Last NFA state is always accepting state
     mNFATable[mNFATable.size()-1]->m_bAcceptingState |= FINAL_STATE;
