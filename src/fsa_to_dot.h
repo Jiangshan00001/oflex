@@ -7,7 +7,7 @@
 void fsa_to_dot(FSA_TABLE & fsa, std::string mFileName);
 
 void fsa_to_cout(FSA_TABLE & fsa, std::string mFileName);
-std::string fsa_to_dot_ss(FSA_TABLE & fsa);
+std::string fsa_to_dot_ss(FSA_TABLE fsa);
 
 
 

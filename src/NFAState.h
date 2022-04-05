@@ -174,7 +174,7 @@ public:
 
 
 	//! Returns all transitions from this state on specific input
-	void GetTransition(char chInput, std::set<NFAState*> &States)
+    void GetTransition(int chInput, std::set<NFAState*> &States)
 	{
 		// clear the array first
 		States.clear();

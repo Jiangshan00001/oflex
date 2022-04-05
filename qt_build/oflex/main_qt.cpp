@@ -16,7 +16,8 @@ int main(int argc, char *argv[])
     ORegexParse mRegex;
     NFAConvert mConvert;
 
-    FSA_TABLE nfa = mRegex.CreateNFAFlex("[^1-9]+");
+    //FSA_TABLE nfa = mRegex.CreateNFAFlex("[1-4]+");
+    FSA_TABLE nfa = mRegex.CreateNFAFlex("[^1-9a-zA-Z]+");
     fsa_to_dot(nfa, "nfa1.dot");
     FSA_TABLE dfa = mConvert.NFAtoDFA(nfa);
     fsa_to_dot(dfa, "dfa1.dot");

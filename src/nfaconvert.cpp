@@ -1,4 +1,5 @@
 #include <iostream>
+#include "num2str.h"
 #include "fsa_to_dot.h"
 
 #include "nfaconvert.h"
@@ -68,7 +69,7 @@ FSA_TABLE NFAConvert::NFAtoDFA(FSA_TABLE &nfa, int startId)
             std::set<int> mChars = GetStatesTransChars(mNFAs);
 
             /// 遍历所有字符
-            for (std::set<int>::iterator itc=mChars.begin();itc!=mChars.end();++itc)
+            for (auto itc=mChars.begin();itc!=mChars.end();++itc)
             {
                 std::set<NFAState*> mNFAMove;
                 std::set<NFAState*> mNFAEps;
@@ -77,18 +78,19 @@ FSA_TABLE NFAConvert::NFAtoDFA(FSA_TABLE &nfa, int startId)
                 mNFAMove = MoveOne(*itc, mNFAs);
                 mNFAEps = MoveZero(mNFAMove, mNFAEps);
 
-                pState = new NFAState(mNFAEps, ++m_nNextStateID);
-                if(!GetExistState(pState, m_DFATable))
+                /// check status is already exist or not
+                /// if exist, just add transition
+                /// if not exist, add state to table, and add transition, and mark_flag=0
+
+                pState = GetExistState(mNFAEps,m_DFATable);
+                if (pState==NULL)
                 {
+                    std::cout<<"NFAtoDFA-itc:"<<num2str(*itc)<<"mNFAEps:"<<mNFAEps.size()<<"\n";
+                    pState = new NFAState(mNFAEps, ++m_nNextStateID);
                     pState->m_mark_flag = 0;
                     m_DFATable.push_back(pState);
-                    m_DFATable[i]->AddTransition(*itc, pState);
                 }
-                else
-                {
-                    pState = GetExistState(pState, m_DFATable);
-                    m_DFATable[i]->AddTransition(*itc, pState);
-                }
+                m_DFATable[i]->AddTransition(*itc, pState);
             }
 
         }
@@ -133,7 +135,7 @@ FSA_TABLE NFAConvert::DFAmin(FSA_TABLE &dfa, int start_id)
 
     for(auto it=dfa.begin();it!=dfa.end();++it)
     {
-        if((*it)->m_bAcceptingState&0x02)
+        if((*it)->m_bAcceptingState&FINAL_STATE)
         {
             st_acc.insert(it, it+1);
         }
@@ -284,6 +286,16 @@ NFAState* NFAConvert::GetExistState(NFAState* mA, FSA_TABLE& mDFAs)
         {
             return *it;
         }
+    }
+    return 0;
+}
+NFAState* NFAConvert::GetExistState(const std::set<NFAState*> &mA, FSA_TABLE &mDFAs)
+{
+    for(FSA_TABLE::iterator it=mDFAs.begin();it!=mDFAs.end();++it)
+    {
+        if((*it)->m_nfa_states==mA)
+            return *it;
+
     }
     return 0;
 }

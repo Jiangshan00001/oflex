@@ -27,6 +27,7 @@ private:
 
     /// 检查mA在mDFAs中是否存在,如果存在，则返回已存在的指针，否则返回0
     NFAState* GetExistState(NFAState* mA, FSA_TABLE &mDFAs);
+    NFAState* GetExistState(const std::set<NFAState*> &mA, FSA_TABLE &mDFAs);
 
 };
 

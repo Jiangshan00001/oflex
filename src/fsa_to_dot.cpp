@@ -2,12 +2,24 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <algorithm>
 
 #include "fsa_to_dot.h"
 
 using namespace std;
 
-std::string fsa_to_dot_ss(FSA_TABLE & fsa)
+static bool cmp_id(const NFAState* a, const NFAState* b)
+{
+    if(a==NULL )return false;
+    if(b==NULL)return true;
+    if(a->m_nStateID<b->m_nStateID)
+        return true;
+    return false;
+
+}
+
+
+std::string fsa_to_dot_ss(FSA_TABLE  fsa)
 {
     std::stringstream stream;
     //..fsa.
@@ -15,6 +27,9 @@ std::string fsa_to_dot_ss(FSA_TABLE & fsa)
     //std::string m_str;
     int i;
     stream<<"digraph G {\n";
+
+
+    std::sort(fsa.begin(), fsa.end(),cmp_id);
 
 
     //cout<<"fsa_table size:"<<fsa.size()<<endl;
@@ -47,59 +62,77 @@ std::string fsa_to_dot_ss(FSA_TABLE & fsa)
 
     for (i=0;i<fsa.size();i++)
     {
+
         std::multimap<int, NFAState*>* trans = fsa[i]->GetTransition();
-        std::multimap<int, NFAState*>::iterator it;
-        for (it=trans->begin();it!=trans->end();++it)
+        //std::multimap<int, NFAState*>::iterator it;
+        std::vector<int> curr_chars;
+        for (auto it=trans->begin();it!=trans->end();++it)
         {
-            stream<<fsa[i]->GetStateID()<<"->"<<it->second->GetStateID();
-
-
-            char mT[4]={0,0,0,0};
-            int val = it->first;
-            if(val==EPS_CHAR)
+            curr_chars.push_back(it->first);
+        }
+        std::sort(curr_chars.begin(), curr_chars.end());
+        for(int j=0;j<curr_chars.size();++j)
+        {
+            if(j>0)
             {
-                mT[0] = 'E';
-                mT[1] = 'p';
-                mT[2] = 's';
+                if(curr_chars[j]==curr_chars[j-1])continue;
             }
-            else if(!((val>=0x20)&&(val<=0x7e)))
-            {
-                //convert to number
-                int b = (val/100)%10;
-                int s = (val/10 )%10;
-                int g = val%10;
-                mT[0] = b+'0';
-                mT[1] = s+'0';
-                mT[2] = g+'0';
-            }
-            else
-            {
+            std::set<NFAState*> States;
+            fsa[i]->GetTransition(curr_chars[j], States);
+            std::vector<NFAState*> StatesVec;
+            StatesVec.assign(States.begin(), States.end());
 
-                if(it->first=='"')
+            std::sort(StatesVec.begin(), StatesVec.end(), cmp_id);
+            for(auto it=StatesVec.begin();it!=StatesVec.end();++it)
+            {
+                stream<<fsa[i]->GetStateID()<<"->"<< (*it)->GetStateID();
+
+
+                char mT[4]={0,0,0,0};
+                int val = curr_chars[j];
+                if(val==EPS_CHAR)
                 {
-                    mT[0] = '\\';
-                    mT[1] = it->first;
+                    mT[0] = 'E';
+                    mT[1] = 'p';
+                    mT[2] = 's';
                 }
-                else if(it->first=='\\')
+                else if(!((val>=0x20)&&(val<=0x7e)))
                 {
-                    mT[0] = '\\';
-                    mT[1] = it->first;
+                    //convert to number
+                    int b = (val/100)%10;
+                    int s = (val/10 )%10;
+                    int g = val%10;
+                    mT[0] = b+'0';
+                    mT[1] = s+'0';
+                    mT[2] = g+'0';
                 }
                 else
                 {
-                    mT[0] = it->first;
-                }
-            }
-            //cout<<"contact operator:"<< (unsigned int)it->first<<endl;
 
-            stream<<"[label= \"";
-            stream<<mT<<"\" ";
-            stream<<"]\n";
+                    if(val=='"')
+                    {
+                        mT[0] = '\\';
+                        mT[1] = val;
+                    }
+                    else if(val=='\\')
+                    {
+                        mT[0] = '\\';
+                        mT[1] = val;
+                    }
+                    else
+                    {
+                        mT[0] = val;
+                    }
+                }
+                //cout<<"contact operator:"<< (unsigned int)it->first<<endl;
+
+                stream<<"[label= \"";
+                stream<<mT<<"\" ";
+                stream<<"]\n";
+            }
+
         }
     }
-
-
-
 
     stream<<"}\n";
 
@@ -122,7 +155,7 @@ void fsa_to_dot(FSA_TABLE & fsa, std::string mFileName)
     mFile<<fsa_to_dot_ss(fsa);
 
 
-	mFile.flush();
+    //mFile.flush();
 	//mFile<<str_stream.str();
 	mFile.close();
 	return;
