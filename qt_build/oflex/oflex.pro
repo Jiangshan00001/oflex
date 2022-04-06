@@ -58,4 +58,5 @@ HEADERS += \
     ../../src/util/argv.h
 
 OTHER_FILES += \
-    ../../test/CMakeLists.txt
+    ../../test/CMakeLists.txt \
+    ../../README.md
