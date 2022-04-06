@@ -12,7 +12,7 @@ endfunction()
 
 
 function(diff_dfa  asm1  asm2)
-add_test( NAME test_diff_dfa${asm1} COMMAND diff  ${asm1} ${asm2} )
+add_test( NAME test_diff_dfa${asm1} COMMAND diff -a -b  ${asm1} ${asm2} )
 endfunction()
 
 set(TEST_SRCS test1 test2 test3)

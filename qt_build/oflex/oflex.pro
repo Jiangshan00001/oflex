@@ -56,3 +56,6 @@ HEADERS += \
     ../../src/fsa_to_dot.h \
     ../../src/mytests.h \
     ../../src/util/argv.h
+
+OTHER_FILES += \
+    ../../test/CMakeLists.txt
