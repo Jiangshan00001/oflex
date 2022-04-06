@@ -299,3 +299,51 @@ NFAState* NFAConvert::GetExistState(const std::set<NFAState*> &mA, FSA_TABLE &mD
     }
     return 0;
 }
+
+int NFAConvert::ReNumber(const FSA_TABLE &mDFAs, int start_id, FSA_TABLE &newDFA)
+{
+    newDFA.clear();
+    NFAState* start =  find_fsa_table_start_state(mDFAs);
+
+    std::map<NFAState*, NFAState*> old_new_state;
+    std::map<NFAState*, NFAState*> new_old_state;
+    start_id=start_id-1;
+
+    NFAState* n = new NFAState(++start_id);
+    n->m_bAcceptingState = start->m_bAcceptingState;
+    old_new_state[start]=n;
+    new_old_state[n]=start;
+    newDFA.push_back(n);
+
+    for(int i=0;i<newDFA.size();++i)
+    {
+        //for every new states. get old state trans and add to new
+        NFAState* curr_new = newDFA[i];
+        NFAState* curr_old = new_old_state[newDFA[i]];
+        std::set<int> chars = curr_old->GetTransChar();
+        std::vector<int> chars_sort;
+        chars_sort.assign(chars.begin(), chars.end());
+        for(auto it=chars_sort.begin();it!=chars_sort.end();++it)
+        {
+            int val = (*it);
+            std::set<NFAState*> States;
+            curr_old->GetTransition(val, States);
+            for(auto it2=States.begin();it2!=States.end();++it2)
+            {
+                NFAState *old_st = *it2;
+                if(old_new_state.find(old_st)==old_new_state.end())
+                {
+                    old_new_state[old_st] = new NFAState(++start_id);
+                    new_old_state[old_new_state[old_st]] = old_st;
+                    old_new_state[old_st]->m_bAcceptingState = old_st->m_bAcceptingState;
+                    newDFA.push_back(old_new_state[old_st]);
+                }
+                curr_new->AddTransition(val, old_new_state[old_st]);
+            }
+        }
+    }
+
+    return 0;
+}
+
+

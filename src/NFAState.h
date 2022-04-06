@@ -274,6 +274,7 @@ public:
 typedef std::deque<NFAState*> FSA_TABLE;
 typedef std::stack<FSA_TABLE> FSA_STACK;
 NFAState* find_fsa_table_final_state(const FSA_TABLE &fsa);
+NFAState* find_fsa_table_start_state(const FSA_TABLE &fsa);
 
 #endif // NFAState_h__
 

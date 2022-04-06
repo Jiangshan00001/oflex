@@ -8,3 +8,4 @@ qt_build/*
 *.bak
 build/*
 test/tmp/*
+.idea/*

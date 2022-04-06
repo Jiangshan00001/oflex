@@ -178,9 +178,14 @@ int main(int argc, char *argv[])
         NFAConvert mConvert;
 
         FSA_TABLE nfa = mRegex.CreateNFAFlex(istr);
+        fsa_to_dot(nfa, out_dot_file_name+"nfa.dot");
+
         FSA_TABLE dfa = mConvert.NFAtoDFA(nfa);
+        fsa_to_dot(dfa, out_dot_file_name+"dfa.dot");
         FSA_TABLE dfamin = mConvert.DFAmin(dfa);
-        fsa_to_dot(dfamin, out_dot_file_name);
+        FSA_TABLE dfamin2;
+        mConvert.ReNumber(dfamin, 0, dfamin2);
+        fsa_to_dot(dfamin2, out_dot_file_name);
         return 0;
     }
     if(parse.HaveOption('i'))
