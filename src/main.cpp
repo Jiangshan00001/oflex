@@ -26,7 +26,7 @@
 ///
 
 
-std::string lex_file_out(std::string includes, std::string add_code, std::vector< std::map<std::string, std::string > > regex_rule)
+std::string lex_file_out(std::string includes, std::string add_code, std::vector< std::map<std::string, std::string > > regex_rule, int is_debug)
 {
     std::stringstream iss;
 
@@ -50,6 +50,8 @@ std::string lex_file_out(std::string includes, std::string add_code, std::vector
 
         FSA_TABLE dfa = mConvert.NFAtoDFA(nfa,start_id);
         FSA_TABLE dfamin = mConvert.DFAmin(dfa, start_id);
+        FSA_TABLE dfamin2;
+        mConvert.ReNumber(dfamin,start_id,dfamin2);
         start_id = mConvert.m_nNextStateID+1;
 
         fsa_to_dot(dfa, num2str(i)+"dfa"+".dot");
@@ -62,26 +64,38 @@ std::string lex_file_out(std::string includes, std::string add_code, std::vector
             nfa_all[0]->AddTransition(EPS_CHAR, nfa_all[curr_len]);
         }
     }
-    FSA_TABLE dfa = mConvert.NFAtoDFA(nfa_all,0);
-    fsa_to_dot(dfa, "dfa.dot");
+    fsa_to_dot(nfa_all, "nfa_all.dot");
+    ///here need to implementation the high low poriority of the final state
+    FSA_TABLE dfa2 = mConvert.NFAtoDFA(nfa_all,0);
+    FSA_TABLE dfa;
+    mConvert.ReNumber(dfa2,0,dfa);
+    fsa_to_dot(dfa, "dfa_all.dot");
 
     iss<<"static int state_cnt="<<dfa.size()<<";\n";
+    iss<<"static int regex_cnt="<<regex_rule.size()<<";\n";
 
     iss<<"static int end_state_id[]={\n";
+    int final_state_cnt=0;
     for(int i=0;i<dfa.size();++i)
     {
         if(dfa[i]->m_bAcceptingState!=FINAL_STATE)continue;
         iss<<dfa[i]->m_nStateID <<",";
+        final_state_cnt++;
     }
     iss<<"\n};\n";
+    iss<<"static int end_state_cnt="<<final_state_cnt<<";\n";
 
+    std::set<std::string> final_state_str;
     iss<<"static int end_state_regex[]={\n";
     for(int i=0;i<dfa.size();++i)
     {
         if(dfa[i]->m_bAcceptingState!=FINAL_STATE)continue;
-        iss<<"\""<<string_pack(dfa[i]->m_accepting_regrex) <<"\"" <<",\n";
+        std::string str_pkd=string_pack(dfa[i]->m_accepting_regrex) ;
+        iss<<"\""<<str_pkd <<"\"" <<",\n";
+        final_state_str.insert(str_pkd);
     }
     iss<<"};\n";
+    iss<<"static int end_state_diff_cnt="<<final_state_str.size()<<";\n";
 
 
     std::vector< std::vector<int> > m_jmp_table;
@@ -162,7 +176,7 @@ int main(int argc, char *argv[])
 {
     ArgsParser parse(argc, argv);
 
-
+    int is_debug = 1;
 
     if(parse.HaveOption('s'))
     {
@@ -176,7 +190,7 @@ int main(int argc, char *argv[])
         //string parse
         ORegexParse mRegex;
         NFAConvert mConvert;
-
+        std::cout<<"istr:"<<istr<<"\n";
         FSA_TABLE nfa = mRegex.CreateNFAFlex(istr);
         fsa_to_dot(nfa, out_dot_file_name+"nfa.dot");
 
@@ -190,7 +204,6 @@ int main(int argc, char *argv[])
     }
     if(parse.HaveOption('i'))
     {
-        std::ifstream ifile;
         std::string file_name = parse.GetOption('i');
         std::string file_out = "default.c";
         if(parse.HaveOption('o'))
@@ -198,6 +211,7 @@ int main(int argc, char *argv[])
             file_out = parse.GetOption('o');
         }
 
+        std::ifstream ifile;
         ifile.open(file_name, std::ifstream::in);
 
         std::stringstream file_cont_ss;
@@ -205,20 +219,28 @@ int main(int argc, char *argv[])
         file_cont_ss<<ifile.rdbuf();
         std::string file_cont;
         file_cont=file_cont_ss.str();
-
+        ifile.close();
+        if(is_debug)
+        {
+            std::cout<<"file_cont_size:"<<file_cont.size()<<"\n";
+        }
 
         std::vector< std::map<std::string, std::string > > regex_rule;
         std::string add_code;
         std::string includes;
-        lex_file_parse2(file_cont, regex_rule,includes, add_code);
+        lex_file_parse2(file_cont, regex_rule,includes, add_code,0);
 
-        for(int i=0;i<regex_rule.size();++i)
+        if(is_debug)
         {
-            std::cout<<i<<". "<< regex_rule[i].begin()->first<<"--->"<< regex_rule[i].begin()->second<<"\n";
+            std::cout<<"rule_size:"<<regex_rule.size()<<"\n";
+            for(int i=0;i<regex_rule.size();++i)
+            {
+                std::cout<<i<<". "<< regex_rule[i].begin()->first<<"--->"<< regex_rule[i].begin()->second<<"\n";
+            }
         }
 
 
-        std::string ret = lex_file_out(includes, add_code,regex_rule);
+        std::string ret = lex_file_out(includes, add_code,regex_rule, is_debug);
 
         std::ofstream ofile;
         ofile.open(file_out);

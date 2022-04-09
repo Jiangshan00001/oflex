@@ -11,6 +11,7 @@ ORegexParse::ORegexParse()
 }
 
 
+
 int ORegexParse::NFAStackPop(FSA_STACK &stk, FSA_TABLE &NFATable)
 {
     // If the stack is empty we cannot pop anything
@@ -70,7 +71,24 @@ int ORegexParse::PushOneDot(FSA_STACK &dst)
 
     return 0;
 }
-int ORegexParse::PushMiddleLR(std::vector<int> chars, int is_inv,FSA_STACK &dst)
+void ORegexParse::add_concat_if_need(FSA_STACK &dst, std::stack<operator_stack_t> &operator_stack)
+{
+    ///after push one byte, check if last operand has operator or not.
+    /// if not, add one concat operator
+    ///
+    if ((operator_stack.size()==0)&& (dst.size()>1))
+    {
+        operator_stack.push(operator_stack_t(dst.size()-1,OPERATOR_CONCAT));
+        return;
+    }
+    if(operator_stack.size()==0)return;
+    if(operator_stack.top().operand_num<dst.size()-1)
+    {
+        operator_stack.push(operator_stack_t(dst.size()-1,OPERATOR_CONCAT));
+    }
+}
+
+int ORegexParse::PushMiddleLR(std::vector<int> chars, int is_inv,FSA_STACK &dst, std::stack<operator_stack_t> &operator_stack)
 {
     // Create 2 new states on the heap
     NFAState *s0 = new NFAState(++m_nNextStateID);
@@ -102,16 +120,52 @@ int ORegexParse::PushMiddleLR(std::vector<int> chars, int is_inv,FSA_STACK &dst)
     NFATable.push_back(s1);
 
 
+
+
     // push it onto the operand stack
     dst.push(NFATable);
+
+    add_concat_if_need(dst, operator_stack);
+    ///----------------------------
 
     TRACE("PushMiddleLR %c\n", is_inv);
     return 0;
 
 }
 
-int ORegexParse::PushOneByte(int chInput, FSA_STACK &dst)
+
+int ORegexParse::PushDotByte(FSA_STACK &dst, std::stack<operator_stack_t> &operator_stack)
 {
+    // Create 2 new states on the heap
+    NFAState *s0 = new NFAState(++m_nNextStateID);
+    NFAState *s1 = new NFAState(++m_nNextStateID);
+
+    for(int i=0x20;i<0x7f;++i)
+    {
+        if(i=='\n')continue;
+        // Add the transition from s0->s1 on input character
+        s0->AddTransition(i, s1);
+    }
+
+    // Create a NFA from these 2 states
+    FSA_TABLE NFATable;
+    NFATable.push_back(s0);
+    NFATable.push_back(s1);
+
+
+    // push it onto the operand stack
+    dst.push(NFATable);
+
+    add_concat_if_need(dst, operator_stack);
+
+    TRACE("PUSHDOT \n");
+    return 0;
+}
+
+int ORegexParse::PushOneByte(int chInput, FSA_STACK &dst, std::stack<operator_stack_t> &operator_stack)
+{
+
+
     // Create 2 new states on the heap
     NFAState *s0 = new NFAState(++m_nNextStateID);
     NFAState *s1 = new NFAState(++m_nNextStateID);
@@ -124,9 +178,10 @@ int ORegexParse::PushOneByte(int chInput, FSA_STACK &dst)
     NFATable.push_back(s0);
     NFATable.push_back(s1);
 
-
     // push it onto the operand stack
     dst.push(NFATable);
+
+    add_concat_if_need(dst, operator_stack);
 
     TRACE("PUSH %c\n", chInput);
     return 0;
@@ -324,13 +379,14 @@ string ORegexParse::ConcatExpand(string strRegEx)
 	return strRes;
 }
 
-bool ORegexParse::Eval(FSA_STACK &OperandStack, std::stack<char> &OperatorStack)
+bool ORegexParse::Eval(FSA_STACK &OperandStack, std::stack<operator_stack_t> &OperatorStack)
 {
 
+    bool ret = false;
 	// First pop the operator from the stack
     if(OperatorStack.size()>0)
 	{
-        char chOperator = OperatorStack.top();
+        char chOperator = OperatorStack.top().val;
         OperatorStack.pop();
 
 		
@@ -338,320 +394,38 @@ bool ORegexParse::Eval(FSA_STACK &OperandStack, std::stack<char> &OperatorStack)
 		switch(chOperator)
 		{
         case  OPERATOR_STAR://#42
-            return Star(OperandStack);
+            ret= Star(OperandStack);
 			break;
         case OPERATOR_UNION://124
-            return Union(OperandStack);
+            ret= Union(OperandStack);
 			break;
         case   OPERATOR_CONCAT:
-            return Concat(OperandStack);
+            ret= Concat(OperandStack);
 			break;
         case OPERATOR_WHY:
-            return OPRWhy(OperandStack);
+            ret= OPRWhy(OperandStack);
             break;
         case OPERATOR_PLUS:
-            return OPRPlus(OperandStack);
+            ret= OPRPlus(OperandStack);
+            break;
+        case OPERATOR_LEFTP:
+            std::cerr<<"ORegexParse::Eval: unknown opr:"<<chOperator<<std::endl;
+            break;
+        case OPERATOR_RIGHTP:
+            std::cerr<<"ORegexParse::Eval: unknown opr:"<<chOperator<<std::endl;
             break;
         default:
             std::cerr<<"ORegexParse::Eval: unknown opr:"<<chOperator<<std::endl;
             break;
 		}
-		
-		return 0;
+
+        add_concat_if_need(OperandStack, OperatorStack);
+        return ret;
 	}
 	
 	return 0;
 }
 
-
-FSA_TABLE ORegexParse::CreateNFA(string strRegEx, int startId)
-{
-	// Parse regular expresion using similar 
-	// method to evaluate arithmetic expressions
-	// But first we will detect concatenation and
-	// insert char(8) at the position where 
-	// concatenation needs to occur
-
-#if DEBUG_ALL
-	cout<< strRegEx<<endl;
-#endif
-
-	strRegEx = ConcatExpand(strRegEx);
-
-#if DEBUG_ALL
-	cout<<"after ConcatExpand"<<strRegEx.size()<<": "<< strRegEx<<endl;
-#endif
-
-    FSA_TABLE m_NFATable;
-
-    FSA_STACK OperandStack;
-    std::stack<char> OperatorStack;
-
-    m_nNextStateID = startId;
-    ///添加起始状态
-    ///
-    ///
-    ///
-    // Create 2 new states on the heap
-    NFAState *s0 = new NFAState(++m_nNextStateID);
-    s0->m_bAcceptingState|=1;
-    // Create a NFA from these 2 states
-    FSA_TABLE startNFATable;
-    startNFATable.push_back(s0);
-
-    // push it onto the operand stack
-    OperandStack.push(startNFATable);
-    OperatorStack.push(8);
-
-
-
-
-	for(int i=0; i<strRegEx.size(); ++i)
-	{
-		// get the charcter
-		char c = strRegEx[i];
-
-#if DEBUG_ALL
-		cout<<"i="<<i<<endl;
-#endif
-
-		if(IsInput(c))///有一个字符，生成合集并放入操作数堆栈
-		{
-            PushOneByte(c, OperandStack);
-		}
-        else if(OperatorStack.empty())/// 如果算符为空，直接放入
-		{
-            OperatorStack.push(c);
-		}
-		else if(IsLeftParanthesis(c))///左括号
-		{
-            OperatorStack.push(c);
-		}
-		else if(IsRightParanthesis(c))///右括号
-		{
-			// Evaluate everyting in paranthesis
-            while(!IsLeftParanthesis(OperatorStack.top()))
-                if(!Eval(OperandStack, OperatorStack))
-                    return m_NFATable;
-				// Remove left paranthesis after the evaluation
-                OperatorStack.pop();
-		}
-		else
-		{
-			/// 如果之前已经有算符了，并且当前算符不是括号
-            while(!OperatorStack.empty() && Presedence(c, OperatorStack.top()))
-			{///如果内部原有算符，切当前算符的优先级小，则先计算				
-                if(!Eval(OperandStack, OperatorStack))
-                    return m_NFATable;
-			}
-            OperatorStack.push(c);
-		}
-	}
-	
-	// Evaluate the rest of operators
-    while(!OperatorStack.empty())
-	{
-        if(!Eval(OperandStack, OperatorStack))
-            return m_NFATable;
-	}
-		
-	// Pop the result from the stack
-    if(!NFAStackPop(OperandStack, m_NFATable))
-	{
-        return m_NFATable;
-	}
-	
-	// Last NFA state is always accepting state
-    m_NFATable[m_NFATable.size()-1]->m_bAcceptingState |= 2;
-	
-    return m_NFATable;
-}
-
-
-#if 0
-FSA_TABLE ORegexParse::CreateNFAFlexTmp(string strRegEx, int startId)
-{
-
-    ///TODO: "/*" 此字符串，需要解码到"时，认为是一个类似()的算符，内部的字符都是连接在一起的
-    // Parse regular expresion using similar
-    // method to evaluate arithmetic expressions
-    // But first we will detect concatenation and
-    // insert char(8) at the position where
-    // concatenation needs to occur
-
-#if DEBUG_ALL
-    cout<< strRegEx<<endl;
-#endif
-
-    strRegEx = strRegEx;
-
-#if DEBUG_ALL
-    cout<<"after ConcatExpand"<<strRegEx.size()<<": "<< strRegEx<<endl;
-#endif
-
-    FSA_TABLE mNFATable;
-
-    FSA_STACK OperandStack;
-    std::stack<char> OperatorStack;
-
-    m_nNextStateID = startId;
-    ///添加起始状态
-    ///
-    ///
-    ///
-    // Create 2 new states on the heap
-    NFAState *s0 = new NFAState(++m_nNextStateID);
-    s0->m_bAcceptingState|=1;
-    // Create a NFA from these 2 states
-    FSA_TABLE startNFATable;
-    startNFATable.push_back(s0);
-
-    ///起始状态和下面状态，使用eps连接
-    // push it onto the operand stack
-    OperandStack.push(startNFATable);
-    OperatorStack.push(OPERATOR_CONCAT);
-
-
-    int curr_status=0;//1--dquote. 0--normal
-
-
-    for(int i=0; i<strRegEx.size(); ++i)
-    {
-        // get the charcter
-        char c = strRegEx[i];
-
-#if DEBUG_ALL
-        cout<<"i="<<i<<endl;
-#endif
-        if (curr_status==1)
-        {
-            ///dquote mode
-            ///
-
-            if(c == OPERATOR_DQUOTE)
-            {
-                curr_status=0;
-                OperatorStack.pop();
-                while(OperatorStack.top()!=OPERATOR_DQUOTE)
-                    Eval(OperandStack, OperatorStack);
-                OperatorStack.pop();
-                continue;
-            }
-
-            PushOneByte(c, OperandStack);
-            OperatorStack.push(OPERATOR_CONCAT);
-            continue;
-        }
-        else if (curr_status==2)
-        {
-            //中括号[]
-            if (c==OPERATOR_RIGHTMID)
-            {
-                OperatorStack.pop();
-                while(OperatorStack.top()!=OPERATOR_LEFTMID)
-                    Eval(OperandStack, OperatorStack);
-                OperatorStack.pop();
-                curr_status=0;
-                continue;
-            }
-            if (c=='-')
-            {
-                char c1=strRegEx[i-1];
-                char c2=strRegEx[i+1];
-                for(int cc=c1+1;cc<c2;++cc)
-                {
-                    PushOneByte((char)cc, OperandStack);
-                    OperatorStack.push(OPERATOR_UNION);
-                }
-                continue;
-            }
-            //中括号
-            PushOneByte(c, OperandStack);
-            OperatorStack.push(OPERATOR_UNION);
-            continue;
-        }
-
-        if(IsInput(c))///有一个字符，生成合集并放入操作数堆栈
-        {
-            PushOneByte(c, OperandStack);
-        }
-        else if(IsLeftParanthesis(c))///左括号
-        {
-            OperatorStack.push(c);
-        }
-        else if(IsRightParanthesis(c))///右括号
-        {
-            // Evaluate everyting in paranthesis
-            while(!IsLeftParanthesis(OperatorStack.top()))
-                if(!Eval(OperandStack, OperatorStack))
-                    return mNFATable;
-                // Remove left paranthesis after the evaluation
-                OperatorStack.pop();
-        }
-        else if(c == OPERATOR_DQUOTE)
-        {
-            ///双引号
-            ///
-            OperatorStack.push(OPERATOR_DQUOTE);
-            curr_status=1;
-            continue;
-        }
-        else if (c==OPERATOR_DOT)
-        {
-            PushOneDot(OperandStack);
-            continue;
-        }
-        else if (c==OPERATOR_LEFTMID)
-        {
-            OperatorStack.push(OPERATOR_LEFTMID);
-            curr_status=2;
-            continue;
-        }
-        else if (c==OPERATOR_PLUS)
-        {//1个或多个
-
-        }
-        else if (c==OPERATOR_WHY)
-        {//0个或1个
-
-        }
-        else if(OperatorStack.empty())/// 如果算符为空，直接放入
-        {
-            OperatorStack.push(c);
-        }
-        else
-        {
-            /// 如果之前已经有算符了，并且当前算符不是括号
-            while(!OperatorStack.empty() && Presedence(c, OperatorStack.top()))
-            {///如果内部原有算符，且当前算符的优先级小，则先计算
-                if(!Eval(OperandStack, OperatorStack))
-                    return mNFATable;
-            }
-            OperatorStack.push(c);
-        }
-    }
-
-    // Evaluate the rest of operators
-    while(!OperatorStack.empty())
-    {
-        if(!Eval(OperandStack, OperatorStack))
-            return mNFATable;
-    }
-
-    // Pop the result from the stack
-    if(!NFAStackPop(OperandStack, mNFATable))
-    {
-        return mNFATable;
-    }
-
-    // Last NFA state is always accepting state
-    mNFATable[mNFATable.size()-1]->m_bAcceptingState |= 2;
-
-    return mNFATable;
-
-}
-
-#endif
 
 
 FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
@@ -666,8 +440,12 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
 
     FSA_TABLE mNFATable;
 
+    /// current stack design is limit.
+    /// as stack operator could not assign it's position with operand
+    ///
+    /// refactor: add OperatorStackOperandNum. information about the operator pos in operand_stack.
     FSA_STACK OperandStack;
-    std::stack<char> OperatorStack;
+    std::stack<operator_stack_t> OperatorStack;
 
     m_nNextStateID = startId-1;
 
@@ -685,7 +463,6 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
 
 
     int curr_status=0;//1--dquote. 0--normal
-    int push_one_opd=0;// pushOperand=1. pushOperator=0
 
     std::vector<int> status_middle_left_chars;//store [] chars
     int status_middle_left_inv=0;
@@ -699,17 +476,19 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
         cout<<"i="<<i<<endl;
 #endif
         if (curr_status==1)
-        {
+        {//"
             ///dquote mode
             /// just concat all characters
 
             if(c == OPERATOR_DQUOTE)
             {
                 curr_status=0;
-                OperatorStack.pop();
-                while(OperatorStack.top()!=OPERATOR_DQUOTE)
+                //OperatorStack.pop();
+                while(OperatorStack.top().val!=OPERATOR_DQUOTE)
+                {
                     Eval(OperandStack, OperatorStack);
-                OperatorStack.pop();
+                }
+                OperatorStack.pop();//pop "
                 continue;
             }
             if(c=='\\')
@@ -719,14 +498,13 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
                 //PushOneByte(c, OperandStack);
                 //continue;
             }
-            if(push_one_opd)OperatorStack.push(OPERATOR_CONCAT);
-            PushOneByte(c, OperandStack);
-            push_one_opd=1;
+
+            PushOneByte(c, OperandStack,OperatorStack);
 
             continue;
         }
         else if (curr_status==2)
-        {
+        {//[
             if (c=='^')
             {
                 status_middle_left_inv=1;
@@ -746,22 +524,19 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
                 for(int cc=c1;cc<=c2;++cc)
                 {
                     status_middle_left_chars.push_back(cc);
-                    //PushOneByte((int)cc, OperandStack);
-                    //if(cc!=c2-1)OperatorStack.push(OPERATOR_UNION);
                 }
                 ++i;//skip c2
                 continue;
             }
             if (c==OPERATOR_RIGHTMID)
             {
-                if(push_one_opd)OperatorStack.push(OPERATOR_UNION);
-                PushMiddleLR(status_middle_left_chars, status_middle_left_inv,OperandStack);
-                push_one_opd=1;
+                OperatorStack.pop();//pop [ operator
+
+                //if(push_one_opd)OperatorStack.push(OPERATOR_UNION);
+                PushMiddleLR(status_middle_left_chars, status_middle_left_inv,OperandStack,OperatorStack);
                 //中括号
                 //while(OperatorStack.top()!=OPERATOR_LEFTMID)
                 //    Eval(OperandStack, OperatorStack);
-                OperatorStack.pop();//pop [ operator
-
 
                 curr_status=0;
                 continue;
@@ -797,45 +572,52 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
                     //PushOneByte(c, OperandStack);
                     //continue;
                 }
-                /// add one byte. add one operator.
-                /// concat with last char
-                if(push_one_opd)OperatorStack.push(OPERATOR_CONCAT);
-                push_one_opd=0;
-                PushOneByte(c, OperandStack);
-                push_one_opd=1;
-            }
-            else if(IsLeftParanthesis(c))///左括号
-            {
-                OperatorStack.push(c);
-                push_one_opd=0;
+
+
+                if(c=='.')
+                {
+                    PushDotByte(OperandStack,OperatorStack);
+                }
+                else
+                {
+                    PushOneByte(c, OperandStack,OperatorStack);
+                }
             }
             else if(IsRightParanthesis(c))///右括号
             {
                 // Evaluate everyting in paranthesis
-                while(!IsLeftParanthesis(OperatorStack.top()))
+                while(!IsLeftParanthesis(OperatorStack.top().val))
+                {
                     if(!Eval(OperandStack, OperatorStack))
+                    {
                         return mNFATable;
+                    }
+                }
+
                     // Remove left paranthesis after the evaluation
                     OperatorStack.pop();
             }
             else
             {
                 /// 如果之前已经有算符了，并且当前算符不是括号
-                while(!OperatorStack.empty() && Presedence(c, OperatorStack.top()))
+                while(!OperatorStack.empty() && Presedence(c, OperatorStack.top().val))
                 {///如果内部原有算符，且当前算符的优先级小，则先计算
+
                     if(!Eval(OperandStack, OperatorStack))
                         return mNFATable;
                 }
-                OperatorStack.push(c);
-                push_one_opd=0;
                 if (c==OPERATOR_LEFTMID)
                 {
                     curr_status=2;
                     status_middle_left_inv=0;
                     status_middle_left_chars.clear();
-                    continue;
                 }
-                else if(c==OPERATOR_DQUOTE)curr_status=1;
+                else if(c==OPERATOR_DQUOTE)
+                {
+                    curr_status=1;
+                }
+
+                OperatorStack.push(operator_stack_t(OperandStack.size(), c));
             }
         }
 
@@ -856,7 +638,7 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
     }
     OperandStack.push(startNFATable);
     OperandStack.push(mNFATable);
-    OperatorStack.push(OPERATOR_CONCAT);
+    OperatorStack.push( operator_stack_t(OperandStack.size(), OPERATOR_CONCAT) );
     Eval(OperandStack, OperatorStack);
     NFAStackPop(OperandStack, mNFATable);
 

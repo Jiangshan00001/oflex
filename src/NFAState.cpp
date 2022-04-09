@@ -25,3 +25,16 @@ NFAState *find_fsa_table_start_state(const FSA_TABLE &fsa)
     }
     return NULL;
 }
+
+
+bool cmp_state_id(const NFAState* a, const NFAState* b)
+{
+    if(a==NULL )return false;
+    if(b==NULL)return true;
+    if(a->m_nStateID<b->m_nStateID)
+        return true;
+    return false;
+
+}
+
+

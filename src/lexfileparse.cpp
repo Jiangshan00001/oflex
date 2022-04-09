@@ -15,14 +15,19 @@
 using namespace std;
 
 
-int skip_pair(std::string line, int start_index, unsigned start_char, unsigned end_char)
+int skip_pair(std::string line, int start_index, unsigned start_char, unsigned end_char, int depth=0)
 {
     int i = start_index;
+
     if(line[i]==start_char)
     {
+        depth++;
+
         while((line[i+1]!=0)&&(line[i+1]!=end_char))
         {
             ++i;
+            depth--;
+            if(depth==0)break;
         }
         return i+1;
     }
@@ -181,7 +186,7 @@ map<string, string> lex_file_parse(const std::string &file_cont)
 unsigned skip_to_blank(const std::string &file_cont, unsigned ipos)
 {
     if (file_cont.size()<=(ipos+1))return ipos;
-    while((file_cont[ipos]!=' ')&&(file_cont[ipos]!='\t')&&(file_cont[ipos]!='\n'))
+    while((file_cont[ipos]!=' ')&&(file_cont[ipos]!='\t')&&(file_cont[ipos]!='\n')&&(file_cont[ipos]!='\r'))
     {
         ipos++;
         if ((ipos+1)==file_cont.size())break;
@@ -191,7 +196,7 @@ unsigned skip_to_blank(const std::string &file_cont, unsigned ipos)
 unsigned skip_to_nblank(const std::string &file_cont, unsigned ipos)
 {
     if (file_cont.size()<=(ipos+1))return ipos;
-    while((file_cont[ipos]==' ')||(file_cont[ipos]=='\t')||(file_cont[ipos]=='\n')||(file_cont[ipos]==255))
+    while((file_cont[ipos]==' ')||(file_cont[ipos]=='\t')||(file_cont[ipos]=='\n')||(file_cont[ipos]==255)||(file_cont[ipos]=='\r'))
     {
         ipos++;
         if ((ipos+1)==file_cont.size())break;
@@ -292,8 +297,8 @@ std::string render_regex(std::string raw_input, const std::map<std::string, std:
 {
     for(auto i=regex_temp.begin();i!=regex_temp.end();++i)
     {
-        i->first;
-        i->second;
+        //i->first;
+        //i->second;
         raw_input = replace(raw_input,"{" + i->first+"}", i->second);
     }
 
@@ -303,7 +308,7 @@ std::string render_regex(std::string raw_input, const std::map<std::string, std:
 /// 输入文件内容，输出解析后结果：
 /// 状态字符串 -->执行代码字符串
 ///
-int lex_file_parse2(const string &file_cont, std::vector<std::map<string, string> > &regex_rule, string &includes, string &add_code)
+int lex_file_parse2(const string &file_cont, std::vector<std::map<string, string> > &regex_rule, string &includes, string &add_code, int is_debug)
 {
 
     unsigned int ipos = 0;
@@ -324,8 +329,20 @@ int lex_file_parse2(const string &file_cont, std::vector<std::map<string, string
     std::string regex_key;
     std::string regex_str;
 
+    if(is_debug)
+    {
+        std::cout<<"lex_file_parse2:file_cont:"<<file_cont.size()<<"\n";
+    }
+
+
     while((ipos+1)<file_cont.size())
     {
+        if(is_debug)
+        {
+            std::cout<<"pos:"<<ipos<<"\n";
+            std::cout<<"mode:"<<curr_mode<<"\n";
+            std::cout<<"char:"<<file_cont[ipos]<<"\n";
+        }
         if (curr_mode==0)
         {
             ipos = skip_to_nblank(file_cont, ipos);
@@ -354,10 +371,10 @@ int lex_file_parse2(const string &file_cont, std::vector<std::map<string, string
 
 
             start = ipos;
-            ipos = skip_pair(file_cont, ipos, '"','"');
-            ipos = skip_pair(file_cont, ipos, '[',']');
-            ipos = skip_pair(file_cont, ipos, '{','}');
-            ipos = skip_pair(file_cont, ipos, '(',')');
+            ipos = skip_pair(file_cont, ipos, '"','"',0);
+            ipos = skip_pair(file_cont, ipos, '[',']',0);
+            ipos = skip_pair(file_cont, ipos, '{','}',0);
+            ipos = skip_pair(file_cont, ipos, '(',')',0);
 
             ipos = skip_to_blank(file_cont, ipos);
             end = ipos;
@@ -376,6 +393,10 @@ int lex_file_parse2(const string &file_cont, std::vector<std::map<string, string
 
             if(regex_key.size()>0)
                 regex_temp[regex_key]=render_regex(regex_str, regex_temp);
+            if(is_debug)
+            {
+                std::cout<<"add new defs:"<<regex_key<<":"<<regex_temp[regex_key]<<"\n";
+            }
         }
         else if(curr_mode==1)
         {

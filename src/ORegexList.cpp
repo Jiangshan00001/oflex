@@ -8,7 +8,7 @@ ORegexList::ORegexList()
 int ORegexList::AppendRegex(std::string mRex, E_REGEX_MATCH_PATTERN mPattern)
 {
     ORegexParse mParse;
-    mParse.CreateNFA(mRex);
+    //mParse.CreateNFA(mRex);
     
     ///
     

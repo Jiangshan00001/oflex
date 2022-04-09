@@ -6,6 +6,7 @@
 #include <deque>
 #include <stack>
 #include <vector>
+#include <algorithm>
 #include <string>
 #include <sstream>
 ///42---'*'
@@ -39,7 +40,7 @@
 #define  OPERATOR_RIGHTP ')'
 #define  OPERATOR_CONCAT 8  //EPS concat
 #define OPERATOR_DQUOTE '\"'
-#define OPERATOR_DOT '.'
+//#define OPERATOR_DOT '.'
 #define OPERATOR_LEFTMID '['
 #define OPERATOR_RIGHTMID ']'
 #define OPERATOR_PLUS '+' //1个或多个重复
@@ -52,6 +53,9 @@
 
 
 #define EPS_CHAR (-1)
+
+bool cmp_state_id(const class NFAState* a, const class NFAState* b);
+
 
 /// 代表NFA/DFA里的一个状态。
 //! State Class
@@ -108,9 +112,13 @@ public:
         // DFA state is accepting state if it is constructed from
         // an accepting NFA state
         m_bAcceptingState	= MIDDLE_STATE;
-        std::set<NFAState*>::iterator iter;
-        for(iter=m_nfa_states.begin(); iter!=m_nfa_states.end(); ++iter)
+        std::vector<NFAState*> nfa_state_v;
+        nfa_state_v.assign(m_nfa_states.begin(), m_nfa_states.end());
+        std::sort(nfa_state_v.begin(), nfa_state_v.end(), cmp_state_id);
+        //printf("updateAcceptingState\n");
+        for(auto iter=nfa_state_v.begin(); iter!=nfa_state_v.end(); ++iter)
         {
+            //printf("updateAcceptingState: %d\n", (*iter)->m_nStateID);
             if((*iter)->m_bAcceptingState==FINAL_STATE)
             {
                    m_bAcceptingState =FINAL_STATE;
@@ -275,6 +283,8 @@ typedef std::deque<NFAState*> FSA_TABLE;
 typedef std::stack<FSA_TABLE> FSA_STACK;
 NFAState* find_fsa_table_final_state(const FSA_TABLE &fsa);
 NFAState* find_fsa_table_start_state(const FSA_TABLE &fsa);
+
+
 
 #endif // NFAState_h__
 

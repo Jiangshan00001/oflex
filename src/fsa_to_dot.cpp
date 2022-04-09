@@ -8,15 +8,6 @@
 
 using namespace std;
 
-static bool cmp_id(const NFAState* a, const NFAState* b)
-{
-    if(a==NULL )return false;
-    if(b==NULL)return true;
-    if(a->m_nStateID<b->m_nStateID)
-        return true;
-    return false;
-
-}
 
 
 std::string fsa_to_dot_ss(FSA_TABLE  fsa)
@@ -29,7 +20,7 @@ std::string fsa_to_dot_ss(FSA_TABLE  fsa)
     stream<<"digraph G {\n";
 
 
-    std::sort(fsa.begin(), fsa.end(),cmp_id);
+    std::sort(fsa.begin(), fsa.end(),cmp_state_id);
 
 
     //cout<<"fsa_table size:"<<fsa.size()<<endl;
@@ -82,7 +73,7 @@ std::string fsa_to_dot_ss(FSA_TABLE  fsa)
             std::vector<NFAState*> StatesVec;
             StatesVec.assign(States.begin(), States.end());
 
-            std::sort(StatesVec.begin(), StatesVec.end(), cmp_id);
+            std::sort(StatesVec.begin(), StatesVec.end(), cmp_state_id);
             for(auto it=StatesVec.begin();it!=StatesVec.end();++it)
             {
                 stream<<fsa[i]->GetStateID()<<"->"<< (*it)->GetStateID();

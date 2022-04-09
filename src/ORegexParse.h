@@ -2,6 +2,18 @@
 #define ORegexParse_h__
 #include "NFAState.h"
 
+
+
+class operator_stack_t
+{
+public:
+    operator_stack_t(){operand_num=0;val=0;}
+    operator_stack_t(int opd, char v){operand_num=opd;val=v;}
+    int operand_num;
+    char val;
+};
+
+
 //! NFA/DFA Table
 
 
@@ -35,7 +47,7 @@ public:
 	/// http://blog.csdn.net/liuhuiyi/article/details/8433203
 	///  Algorithm Thompson's construction
 	/// http://www.cppblog.com/woaidongmao/archive/2010/10/21/97245.html
-    FSA_TABLE CreateNFA(std::string strRegEx, int startId=0);
+    ///FSA_TABLE CreateNFA(std::string strRegEx, int startId=0);
 
     /// flex regrex expression to nfa
     /// first state is start state(sateID=startId)
@@ -44,6 +56,7 @@ public:
     FSA_TABLE CreateNFAFlex(std::string strRegEx, int startId=0);
 
 
+    void add_concat_if_need(FSA_STACK &dst, std::stack<operator_stack_t> &operator_stack);
 private:
 	///将两个字符之间省略的连接符添加上
 	std::string ConcatExpand(std::string strRegEx);
@@ -53,9 +66,10 @@ private:
     int NFAStackPush(FSA_STACK &stk, FSA_TABLE &NFATable);
 
 	///将一个字符，装换为一个状态合集，放入operand stack	
-    int PushOneByte(int chInput, FSA_STACK &dst);
+    int PushOneByte(int chInput, FSA_STACK &dst, std::stack<operator_stack_t> &operator_stack);
+    int PushDotByte(FSA_STACK &dst, std::stack<operator_stack_t> &operator_stack);
 
-    int PushMiddleLR(std::vector<int> chars, int is_inv, FSA_STACK &dst);
+    int PushMiddleLR(std::vector<int> chars, int is_inv, FSA_STACK &dst, std::stack<operator_stack_t> &operator_stack);
 
 
 	//! Evaluates the concatenation operator
@@ -86,9 +100,10 @@ private:
 
 	//! Checks is a specific character and operator
 	bool IsOperator(char ch) { 
+        //(ch==OPERATOR_DOT)||
 		return ((ch == OPERATOR_STAR) || (ch == OPERATOR_UNION) ||
             (ch == OPERATOR_LEFTP) || (ch == OPERATOR_RIGHTP) ||
-                (ch == OPERATOR_CONCAT)||(ch==OPERATOR_DQUOTE)||(ch==OPERATOR_DOT)||
+                (ch == OPERATOR_CONCAT)||(ch==OPERATOR_DQUOTE)||
                 (ch==OPERATOR_LEFTMID)||(ch==OPERATOR_RIGHTMID)||(ch==OPERATOR_PLUS)||
                 (ch==OPERATOR_WHY)||(ch==OPERATOR_NOT)  ); };
 	
@@ -105,7 +120,7 @@ private:
 
 
 	//! Evaluates the next operator from the operator stack
-    bool Eval(FSA_STACK &OperandStack, std::stack<char> &OperatorStack);
+    bool Eval(FSA_STACK &OperandStack, std::stack<operator_stack_t> &OperatorStack);
 
 
 	/// 查看优先级，如果opLeft<=opRight 则返回1，否则返回0
@@ -124,8 +139,14 @@ private:
 	*/
 	bool Presedence(char opLeft, char opRight)
 	{
-		if(opLeft == opRight)
-			return 1;
+        int op_list[]={OPERATOR_RIGHTP, OPERATOR_STAR, OPERATOR_WHY,OPERATOR_PLUS, OPERATOR_CONCAT,  OPERATOR_UNION};//OPERATOR_LEFTP
+
+        if ((opLeft==OPERATOR_RIGHTP)&&(opRight==OPERATOR_LEFTP))return 1;
+        if (opRight==OPERATOR_LEFTP)return 0;
+        if (opLeft==OPERATOR_LEFTP)return 0;
+
+        if(opLeft == opRight)
+            return 1;
 
         if((opLeft == OPERATOR_STAR)||(opLeft == OPERATOR_WHY)||(opLeft == OPERATOR_PLUS))/// star优先级最高
 			return 0;
@@ -141,6 +162,8 @@ private:
 
 		if(opLeft == OPERATOR_UNION)
 			return 0;
+
+        if(opRight==OPERATOR_UNION)return 0;
 		
 		return 1;
     }

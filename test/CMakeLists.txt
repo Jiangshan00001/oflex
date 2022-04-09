@@ -1,6 +1,10 @@
 
 enable_testing()
 
+function(l_to_inc file_name_in file_name_out)
+add_test( NAME l_to_inc${file_name} COMMAND oflex -i ${file_name_in} -o ${file_name_out} )
+endfunction()
+
 
 function(regrex_to_dfa reg_str file_name)
 add_test( NAME regex_to_dfa${file_name} COMMAND oflex -s ${reg_str} -d ${file_name} )
@@ -16,7 +20,7 @@ add_test( NAME test_diff_dfa${asm1} COMMAND diff -a -b  ${asm1} ${asm2} )
 endfunction()
 
 set(TEST_SRCS test1 test2 test3)
-set(TEST_SRCS ${TEST_SRCS} test4)
+set(TEST_SRCS ${TEST_SRCS} test4 test5 test6 )
 
 foreach(MY_ASM  ${TEST_SRCS})
 
@@ -34,4 +38,11 @@ diff_dfa(${CMAKE_CURRENT_SOURCE_DIR}/${IFILE_BASE}  ${CMAKE_CURRENT_BINARY_DIR}/
 
 endforeach()
 
+set(TEST_L_SRCS quut_com_ansi_c.l)
 
+foreach(MY_ASM  ${TEST_L_SRCS})
+
+l_to_inc(${CMAKE_CURRENT_SOURCE_DIR}/${MY_ASM}  ${CMAKE_CURRENT_BINARY_DIR}/${MY_ASM}_out.inc )
+diff_dfa(${CMAKE_CURRENT_SOURCE_DIR}/${MY_ASM}.inc  ${CMAKE_CURRENT_BINARY_DIR}/${MY_ASM}_out.inc)
+
+endforeach()

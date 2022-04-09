@@ -85,7 +85,7 @@ FSA_TABLE NFAConvert::NFAtoDFA(FSA_TABLE &nfa, int startId)
                 pState = GetExistState(mNFAEps,m_DFATable);
                 if (pState==NULL)
                 {
-                    std::cout<<"NFAtoDFA-itc:"<<num2str(*itc)<<"mNFAEps:"<<mNFAEps.size()<<"\n";
+                    //std::cout<<"NFAtoDFA-itc:"<<num2str(*itc)<<"mNFAEps:"<<mNFAEps.size()<<"\n";
                     pState = new NFAState(mNFAEps, ++m_nNextStateID);
                     pState->m_mark_flag = 0;
                     m_DFATable.push_back(pState);
@@ -304,12 +304,13 @@ int NFAConvert::ReNumber(const FSA_TABLE &mDFAs, int start_id, FSA_TABLE &newDFA
 {
     newDFA.clear();
     NFAState* start =  find_fsa_table_start_state(mDFAs);
+    if(start==NULL)return -1;
 
     std::map<NFAState*, NFAState*> old_new_state;
     std::map<NFAState*, NFAState*> new_old_state;
-    start_id=start_id-1;
+    m_nNextStateID=start_id-1;
 
-    NFAState* n = new NFAState(++start_id);
+    NFAState* n = new NFAState(++m_nNextStateID);
     n->m_bAcceptingState = start->m_bAcceptingState;
     old_new_state[start]=n;
     new_old_state[n]=start;
@@ -333,9 +334,10 @@ int NFAConvert::ReNumber(const FSA_TABLE &mDFAs, int start_id, FSA_TABLE &newDFA
                 NFAState *old_st = *it2;
                 if(old_new_state.find(old_st)==old_new_state.end())
                 {
-                    old_new_state[old_st] = new NFAState(++start_id);
+                    old_new_state[old_st] = new NFAState(++m_nNextStateID);
                     new_old_state[old_new_state[old_st]] = old_st;
                     old_new_state[old_st]->m_bAcceptingState = old_st->m_bAcceptingState;
+                    old_new_state[old_st]->m_accepting_regrex = old_st->m_accepting_regrex;
                     newDFA.push_back(old_new_state[old_st]);
                 }
                 curr_new->AddTransition(val, old_new_state[old_st]);
