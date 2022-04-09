@@ -43,5 +43,5 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: install_${{ matrix.os }}
-        path: ${{github.workspace}}/install
+        path: ${{github.workspace}}/build/src
      
