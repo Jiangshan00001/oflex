@@ -1,3 +1,5 @@
+///2022.4.9 fix abc\r\n --> abc\r error
+
 #include "trim.h"
 
 std::string& trim1(std::string &s, char tr_char)
@@ -19,6 +21,7 @@ std::string& trim(std::string &s)
     {
         return s;
     }
+    int l = s.size();
 
     s.erase(0,s.find_first_not_of(" "));
     s.erase(s.find_last_not_of(" ") + 1);
@@ -32,6 +35,12 @@ std::string& trim(std::string &s)
 
     s.erase(0,s.find_first_not_of("\r"));
     s.erase(s.find_last_not_of("\r") + 1);
+
+    if(s.size()<l)
+    {
+        //if trimmed, do it again.
+        trim(s);
+    }
 
     return s;
 }

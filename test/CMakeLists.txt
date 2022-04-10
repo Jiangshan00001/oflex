@@ -2,7 +2,7 @@
 enable_testing()
 
 function(l_to_inc file_name_in file_name_out)
-add_test( NAME l_to_inc${file_name} COMMAND oflex -i ${file_name_in} -o ${file_name_out} )
+add_test( NAME l_to_inc${file_name_in} COMMAND oflex -i ${file_name_in} -o ${file_name_out} )
 endfunction()
 
 
@@ -38,7 +38,7 @@ diff_dfa(${CMAKE_CURRENT_SOURCE_DIR}/${IFILE_BASE}  ${CMAKE_CURRENT_BINARY_DIR}/
 
 endforeach()
 
-set(TEST_L_SRCS quut_com_ansi_c.l)
+set(TEST_L_SRCS calc.l quut_com_ansi_c.l)
 
 foreach(MY_ASM  ${TEST_L_SRCS})
 

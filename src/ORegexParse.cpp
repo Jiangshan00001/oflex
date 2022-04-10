@@ -517,16 +517,22 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
                 ///A-Z. when parse -, A already pushed to operand stack.
                 //OperandStack.pop();
                 //push_one_opd=0;
-                status_middle_left_chars.pop_back();
-
-                unsigned char c1=strRegEx[i-1];
-                unsigned char c2=strRegEx[i+1];
-                for(int cc=c1;cc<=c2;++cc)
+                if (status_middle_left_chars.size()>0)
                 {
-                    status_middle_left_chars.push_back(cc);
+                    status_middle_left_chars.pop_back();
+                    unsigned char c1=strRegEx[i-1];
+                    unsigned char c2=strRegEx[i+1];
+                    for(int cc=c1;cc<=c2;++cc)
+                    {
+                        status_middle_left_chars.push_back(cc);
+                    }
+                    ++i;//skip c2
+                    continue;
                 }
-                ++i;//skip c2
-                continue;
+                else
+                {///FIXME this issue: [-/+*()\n]
+                    status_middle_left_chars.push_back(c);
+                }
             }
             if (c==OPERATOR_RIGHTMID)
             {
