@@ -45,7 +45,7 @@ int ORegexParse::NFAStackPush(FSA_STACK &stk,FSA_TABLE &NFATable)
 	return 0;
 }
 
-
+#if 0
 int ORegexParse::PushOneDot(FSA_STACK &dst)
 {
     // Create 2 new states on the heap
@@ -71,6 +71,8 @@ int ORegexParse::PushOneDot(FSA_STACK &dst)
 
     return 0;
 }
+#endif
+
 void ORegexParse::add_concat_if_need(FSA_STACK &dst, std::stack<operator_stack_t> &operator_stack)
 {
     ///after push one byte, check if last operand has operator or not.
@@ -139,8 +141,8 @@ int ORegexParse::PushDotByte(FSA_STACK &dst, std::stack<operator_stack_t> &opera
     // Create 2 new states on the heap
     NFAState *s0 = new NFAState(++m_nNextStateID);
     NFAState *s1 = new NFAState(++m_nNextStateID);
-
-    for(int i=0x20;i<0x7f;++i)
+    ///add 10->\r in . seq
+    for(int i=10;i<0x7f;++i)
     {
         if(i=='\n')continue;
         // Add the transition from s0->s1 on input character

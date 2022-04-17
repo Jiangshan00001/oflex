@@ -9,21 +9,74 @@
 #include "num2str.h"
 #include "string_eval.h"
 #include "mytests.h"
+#include "trim.h"
+
+std::string lex_file_out(std::string includes, std::string add_code, std::vector< std::map<std::string, std::string > > regex_rule, int is_debug);
 
 int main(int argc, char *argv[])
+{
+
+
+    //std::string file_name = "../../test/quut_com_ansi_c.l";
+    std::string file_name = "../../test/calc.l";
+    std::string file_out = "default.inc";
+
+    std::ifstream ifile;
+    ifile.open(file_name, std::ifstream::in);
+
+    std::stringstream file_cont_ss;
+
+    file_cont_ss<<ifile.rdbuf();
+    std::string file_cont;
+    file_cont=file_cont_ss.str();
+    ifile.close();
+    std::cout<<"file_cont_size:"<<file_cont.size()<<"\n";
+
+    std::vector< std::map<std::string, std::string > > regex_rule;
+    std::string add_code;
+    std::string includes;
+    lex_file_parse2(file_cont, regex_rule,includes, add_code);
+
+    std::cout<<"rule_size:"<<regex_rule.size()<<"\n";
+    for(int i=0;i<regex_rule.size();++i)
+    {
+        std::cout<<i<<". "<< regex_rule[i].begin()->first<<"--->"<< regex_rule[i].begin()->second<<"\n";
+    }
+
+
+    std::string ret = lex_file_out(includes, add_code,regex_rule,0);
+
+    std::ofstream ofile;
+    ofile.open(file_out);
+    ofile<<ret;
+    ofile.close();
+    return 0;
+    return 0;
+}
+
+int mainsss(int argc, char *argv[])
 {
     //string parse
     ORegexParse mRegex;
     NFAConvert mConvert;
 
+
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("[1-4]+");
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("[^1-9a-zA-Z]+");
-    FSA_TABLE nfa = mRegex.CreateNFAFlex("abc");
+    //FSA_TABLE nfa = mRegex.CreateNFAFlex("((1|2)|3)+");
+    //FSA_TABLE nfa = mRegex.CreateNFAFlex("[0-1]*\".\"");
+    //FSA_TABLE nfa = mRegex.CreateNFAFlex("\"/*\"");
+    //FSA_TABLE nfa = mRegex.CreateNFAFlex(".");
+    //FSA_TABLE nfa = mRegex.CreateNFAFlex("\"//\"[^\n]*");
+    FSA_TABLE nfa = mRegex.CreateNFAFlex("[a-bA-B_]([a-bA-B_]|[0-1])*");
     fsa_to_dot(nfa, "nfa1.dot");
     FSA_TABLE dfa = mConvert.NFAtoDFA(nfa);
     fsa_to_dot(dfa, "dfa1.dot");
     FSA_TABLE dfamin = mConvert.DFAmin(dfa);
-    fsa_to_dot(dfamin, "dfa_min1.dot");
+    FSA_TABLE newDFA;
+    mConvert.ReNumber(dfamin, 0, newDFA);
+    fsa_to_dot(newDFA, "dfa_min1.dot");
+    std::cout<<fsa_to_dot_ss(newDFA);
     return 0;
 }
 

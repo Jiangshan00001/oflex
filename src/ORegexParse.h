@@ -168,7 +168,7 @@ private:
 		return 1;
     }
 
-    int PushOneDot(FSA_STACK &dst);
+    //int PushOneDot(FSA_STACK &dst);
 };
 
 #endif // ORegexParse_h__
