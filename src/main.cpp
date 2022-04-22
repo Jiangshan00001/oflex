@@ -26,7 +26,9 @@
 ///
 
 
-std::string lex_file_out(std::string includes, std::string add_code, std::vector< std::map<std::string, std::string > > regex_rule, int is_debug)
+std::string lex_file_out(std::string includes, std::string add_code,
+                         std::vector< std::map<std::string, std::string > > regex_rule,
+                         int is_debug)
 {
     std::stringstream iss;
 
@@ -45,8 +47,8 @@ std::string lex_file_out(std::string includes, std::string add_code, std::vector
         FSA_TABLE nfa = mRegex.CreateNFAFlex(lex_str, start_id);
 
         std::cout<<i<<". "<<lex_str<<"\n";
+        if(is_debug)fsa_to_dot(nfa, num2str(i)+"nfa"+".dot");
 
-        fsa_to_dot(nfa, num2str(i)+"nfa"+".dot");
 
         FSA_TABLE dfa = mConvert.NFAtoDFA(nfa,start_id);
         FSA_TABLE dfamin = mConvert.DFAmin(dfa, start_id);
@@ -54,7 +56,7 @@ std::string lex_file_out(std::string includes, std::string add_code, std::vector
         mConvert.ReNumber(dfamin,start_id,dfamin2);
         start_id = mConvert.m_nNextStateID+1;
 
-        fsa_to_dot(dfa, num2str(i)+"dfa"+".dot");
+        if(is_debug)fsa_to_dot(dfa, num2str(i)+"dfa"+".dot");
         NFAState* final_state = find_fsa_table_final_state(dfa);
         end_state_ids.push_back(final_state->m_nStateID);
         int curr_len = nfa_all.size();
@@ -64,12 +66,12 @@ std::string lex_file_out(std::string includes, std::string add_code, std::vector
             nfa_all[0]->AddTransition(EPS_CHAR, nfa_all[curr_len]);
         }
     }
-    fsa_to_dot(nfa_all, "nfa_all.dot");
+    if(is_debug)fsa_to_dot(nfa_all, "nfa_all.dot");
     ///here need to implementation the high low poriority of the final state
     FSA_TABLE dfa2 = mConvert.NFAtoDFA(nfa_all,0);
     FSA_TABLE dfa;
     mConvert.ReNumber(dfa2,0,dfa);
-    fsa_to_dot(dfa, "dfa_all.dot");
+    if(is_debug)fsa_to_dot(dfa, "dfa_all.dot");
 
     iss<<"static int state_cnt="<<dfa.size()<<";\n";
     iss<<"static int regex_cnt="<<regex_rule.size()<<";\n";
@@ -171,8 +173,11 @@ std::string lex_file_out(std::string includes, std::string add_code, std::vector
 
 
 #ifndef QT_BUILD
-/// -s abcd -d dfa.dot -o out.c -i input_lex.l
 int main(int argc, char *argv[])
+#else
+int main_qt(int argc, char *argv[])
+#endif
+/// -s abcd -d dfa.dot -o out.c -i input_lex.l
 {
     ArgsParser parse(argc, argv);
 
@@ -255,5 +260,4 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-#endif
 

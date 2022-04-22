@@ -20,7 +20,7 @@ add_test( NAME test_diff_dfa${asm1} COMMAND diff -a -b  ${asm1} ${asm2} )
 endfunction()
 
 set(TEST_SRCS test1 test2 test3)
-set(TEST_SRCS ${TEST_SRCS} test4 test5 test6 )
+set(TEST_SRCS ${TEST_SRCS} test4 test5 test6 test7 )
 
 foreach(MY_ASM  ${TEST_SRCS})
 

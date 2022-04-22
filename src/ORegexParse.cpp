@@ -552,8 +552,18 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
 
             if(c=='\\')
             {
+                std::map<int, int> control_char={{'n','\n'},{'t','\t'},{'v','\v'},{'f','\f'},{'r','\r'} };
                 ++i;
-                c = strRegEx[i];
+                if(control_char.find(strRegEx[i])!=control_char.end())
+                {
+                    c=control_char[strRegEx[i]];
+                }
+                else
+                {
+                    // \\
+                    c = strRegEx[i];
+                }
+
             }
 
 
