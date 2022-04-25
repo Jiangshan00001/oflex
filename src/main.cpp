@@ -173,7 +173,7 @@ int main_qt(int argc, char *argv[])
 {
     ArgsParser parse(argc, argv);
 
-    int is_debug = 1;
+    int is_debug = 0;
 
     if(parse.HaveOption('s'))
     {
@@ -203,10 +203,27 @@ int main_qt(int argc, char *argv[])
     {
         std::string file_name = parse.GetOption('i');
         std::string file_out = "oflex_sample.h";
+        std::string class_name = "flex_sample";
+        std::string jmp_file_name="";
         if(parse.HaveOption('o'))
         {
             file_out = parse.GetOption('o');
         }
+        if(parse.HaveOption('c'))
+        {
+            class_name = parse.GetOption('c');
+        }
+        if(parse.HaveOption('d'))
+        {
+            is_debug=1;
+        }
+
+        if(parse.HaveOption('d'))
+        {
+            jmp_file_name=parse.GetOption('j');
+        }
+
+
 
         std::ifstream ifile;
         ifile.open(file_name, std::ifstream::in);
@@ -239,17 +256,29 @@ int main_qt(int argc, char *argv[])
 
         std::string ret = lex_file_out(includes, add_code,regex_rule, is_debug);
 
+        if(!jmp_file_name.empty())
+        {
+            std::ofstream ofile;
+            ofile.open(jmp_file_name);
+            ofile<<ret;
+            ofile.close();
+        }
+
+
         flex_sample1 sample1;
-        ret = sample1.render(ret, includes, add_code);
+        ret = sample1.render(ret, includes, add_code,class_name);
         std::ofstream ofile;
         ofile.open(file_out);
         ofile<<ret;
         ofile.close();
+
+
+
         return 0;
     }
 
     std::cout<<"usage: prog -s string_regrex -d dfa_file_name.dot\n";
-    std::cout<<"usage: prog -i lex.l -o output.c/cpp\n";
+    std::cout<<"usage: prog -i lex.l -o output.h -c class_name\n";
 
     return 0;
 }

@@ -6,7 +6,7 @@ class flex_sample1
 {
 public:
     flex_sample1();
-    std::string render(std::string core_txt, std::string headers, std::string other_code);
+    std::string render(std::string core_txt, std::string headers, std::string other_code, std::string class_name);
 };
 
 #endif // FLEX_SAMPLE1_H

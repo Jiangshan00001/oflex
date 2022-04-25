@@ -7,12 +7,12 @@ flex_sample1::flex_sample1()
 
 }
 
-std::string flex_sample1::render(std::string core_txt, std::string headers, std::string other_code)
+std::string flex_sample1::render(std::string core_txt, std::string headers, std::string other_code, std::string class_name)
 {
     std::string temp=R"AAA(//raw;
 
-#ifndef OFLEX_SAMPLE_H
-#define OFLEX_SAMPLE_H
+#ifndef TEMPLATE_CLASS_NAME_H
+#define TEMPLATE_CLASS_NAME_H
 #include <fstream>
 #include <string>
 #include <sstream>
@@ -22,7 +22,7 @@ std::string flex_sample1::render(std::string core_txt, std::string headers, std:
 
 TEMPLATE_HEADER_POSITION
 
-class oflex_sample
+class TEMPLATE_CLASS_NAME
 {
 public:
    class token
@@ -231,6 +231,9 @@ TEMPLATE_OTHER_CODE_POSITION
     replace(temp, "TEMPLATE_HEADER_POSITION", headers);
     replace(temp, "TEMPLATE_CORE_POSITION", core_txt);
     replace(temp, "TEMPLATE_OTHER_CODE_POSITION", other_code);
+    replace(temp, "TEMPLATE_CLASS_NAME", class_name);
+
+
 
     return temp;
 }
