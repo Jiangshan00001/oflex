@@ -22,6 +22,7 @@ DEFINES += QT_BUILD
 INCLUDEPATH += ../../src/ ../../src/util
 
 SOURCES += \
+    ../../src/flex_sample1.cpp \
     ../../src/main.cpp \
     ../../src/NFAState.cpp \
     ../../src/ORegexList.cpp \
@@ -43,6 +44,7 @@ HEADERS += \
     ../../src/NFAState.h \
     ../../src/ORegexList.h \
     ../../src/ORegexParse.h \
+    ../../src/flex_sample1.h \
     ../../src/nfaconvert.h \
     ../../src/util/num2str.h \
     ../../src/lexfileparse.h \

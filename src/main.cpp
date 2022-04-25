@@ -12,7 +12,7 @@
 #include "lexfileparse.h"
 #include "num2str.h"
 #include "string_eval.h"
-
+#include "flex_sample1.h"
 
 /// 堆栈方法求值
 /// http://blog.csdn.net/liuhuiyi/article/details/8433203
@@ -31,10 +31,6 @@ std::string lex_file_out(std::string includes, std::string add_code,
                          int is_debug)
 {
     std::stringstream iss;
-
-    iss<<"#if 1// start_code\n";
-    iss<<includes;
-    iss<<"\n#endif //start_code finish\n";
 
     int start_id = 0;
     ORegexParse mRegex;
@@ -73,10 +69,10 @@ std::string lex_file_out(std::string includes, std::string add_code,
     mConvert.ReNumber(dfa2,0,dfa);
     if(is_debug)fsa_to_dot(dfa, "dfa_all.dot");
 
-    iss<<"static int state_cnt="<<dfa.size()<<";\n";
-    iss<<"static int regex_cnt="<<regex_rule.size()<<";\n";
+    iss<<"int m_state_cnt="<<dfa.size()<<";\n";
+    iss<<"int m_regex_cnt="<<regex_rule.size()<<";\n";
 
-    iss<<"static int end_state_id[]={\n";
+    iss<<"std::vector<int> m_end_state_id={\n";
     int final_state_cnt=0;
     for(int i=0;i<dfa.size();++i)
     {
@@ -85,10 +81,10 @@ std::string lex_file_out(std::string includes, std::string add_code,
         final_state_cnt++;
     }
     iss<<"\n};\n";
-    iss<<"static int end_state_cnt="<<final_state_cnt<<";\n";
+    iss<<"int m_end_state_cnt="<<final_state_cnt<<";\n";
 
     std::set<std::string> final_state_str;
-    iss<<"static int end_state_regex[]={\n";
+    iss<<"std::vector<std::string> m_end_state_regex={\n";
     for(int i=0;i<dfa.size();++i)
     {
         if(dfa[i]->m_bAcceptingState!=FINAL_STATE)continue;
@@ -97,7 +93,7 @@ std::string lex_file_out(std::string includes, std::string add_code,
         final_state_str.insert(str_pkd);
     }
     iss<<"};\n";
-    iss<<"static int end_state_diff_cnt="<<final_state_str.size()<<";\n";
+    iss<<"int m_end_state_diff_cnt="<<final_state_str.size()<<";\n";
 
 
     std::vector< std::vector<int> > m_jmp_table;
@@ -123,11 +119,11 @@ std::string lex_file_out(std::string includes, std::string add_code,
 
 
 
-    iss<<"static int state_jmp_table[][257]={\n";
-    for(int i=0;i<m_jmp_table.size();++i)
+    iss<<"int m_state_jmp_table["<<m_jmp_table.size() <<"][257]={\n";
+    for(unsigned i=0;i<m_jmp_table.size();++i)
     {
         iss<<"{";
-        for(int j=0;j<m_jmp_table[i].size();++j)
+        for(unsigned j=0;j<m_jmp_table[i].size();++j)
         {
             iss<<m_jmp_table[i][j]<<",";
         }
@@ -135,14 +131,14 @@ std::string lex_file_out(std::string includes, std::string add_code,
     }
     iss<<"};\n";
 
-    iss<<"static int state_call(int state_id, std::string curr_text){\n";
+    iss<<"int state_call(int state_id, std::string curr_text, const char* yytext, int &yylval){\n";
     iss<<"switch(state_id)\n";
     iss<<"{\n";
 
-    for(int j=0;j<regex_rule.size();++j)
+    for(unsigned j=0;j<regex_rule.size();++j)
     {
         int has_case =0;
-        for(int i=0;i<dfa.size();++i)
+        for(unsigned i=0;i<dfa.size();++i)
         {
             if(dfa[i]->m_bAcceptingState!=FINAL_STATE)continue;
             if(dfa[i]->m_accepting_regrex==regex_rule[j].begin()->first)
@@ -162,12 +158,8 @@ std::string lex_file_out(std::string includes, std::string add_code,
 
 
     iss<<"default:\nbreak;\n";
-    iss<<"\n};\n}\n";
+    iss<<"\n};\nreturn 0;\n}\n";
 
-
-    iss<<"#if 1// end_code\n";
-    iss<<add_code;
-    iss<<"\n#endif //end_code finish\n";
     return iss.str();
 }
 
@@ -210,7 +202,7 @@ int main_qt(int argc, char *argv[])
     if(parse.HaveOption('i'))
     {
         std::string file_name = parse.GetOption('i');
-        std::string file_out = "default.c";
+        std::string file_out = "oflex_sample.h";
         if(parse.HaveOption('o'))
         {
             file_out = parse.GetOption('o');
@@ -247,6 +239,8 @@ int main_qt(int argc, char *argv[])
 
         std::string ret = lex_file_out(includes, add_code,regex_rule, is_debug);
 
+        flex_sample1 sample1;
+        ret = sample1.render(ret, includes, add_code);
         std::ofstream ofile;
         ofile.open(file_out);
         ofile<<ret;
