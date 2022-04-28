@@ -13,7 +13,7 @@
 
 std::string lex_file_out(std::string includes, std::string add_code, std::vector< std::map<std::string, std::string > > regex_rule, int is_debug);
 
-int main(int argc, char *argv[])
+int mainffff(int argc, char *argv[])
 {
 
 
@@ -54,21 +54,23 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-int mainsss(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     //string parse
     ORegexParse mRegex;
     NFAConvert mConvert;
 
 
-    //FSA_TABLE nfa = mRegex.CreateNFAFlex("[1-4]+");
+    FSA_TABLE nfa = mRegex.CreateNFAFlex("[0-9][0-9]*");
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("[^1-9a-zA-Z]+");
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("((1|2)|3)+");
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("[0-1]*\".\"");
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("\"/*\"");
     //FSA_TABLE nfa = mRegex.CreateNFAFlex(".");
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("\"//\"[^\n]*");
-    FSA_TABLE nfa = mRegex.CreateNFAFlex("[a-bA-B_]([a-bA-B_]|[0-1])*");
+    //FSA_TABLE nfa = mRegex.CreateNFAFlex("[a-bA-B_]([a-bA-B_]|[0-1])*");
+    //FSA_TABLE nfa = mRegex.CreateNFAFlex("[0-9][0-9]*");
+    //FSA_TABLE nfa = mRegex.CreateNFAFlex("B*C");
     fsa_to_dot(nfa, "nfa1.dot");
     FSA_TABLE dfa = mConvert.NFAtoDFA(nfa);
     fsa_to_dot(dfa, "dfa1.dot");
@@ -79,7 +81,35 @@ int mainsss(int argc, char *argv[])
     std::cout<<fsa_to_dot_ss(newDFA);
     return 0;
 }
+int mainerg(int argc, char *argv[])
+{
+    std::vector< std::map<std::string, std::string > > regex_rule;
+    std::string add_code;
+    std::string includes;
+    int is_debug = 1;
+    std::string file_cont=R"ZZZ(
+%%
+"{" {return 2;}
+. {return 3;}
 
+%%
+
+                          )ZZZ";
+    lex_file_parse2(file_cont, regex_rule,includes, add_code,0);
+
+    if(is_debug)
+    {
+        std::cout<<"rule_size:"<<regex_rule.size()<<"\n";
+        for(int i=0;i<regex_rule.size();++i)
+        {
+            std::cout<<i<<". "<< regex_rule[i].begin()->first<<"--->"<< regex_rule[i].begin()->second<<"\n";
+        }
+    }
+    std::string ret = lex_file_out(includes, add_code,regex_rule, is_debug);
+    std::cout<<"==========\n";
+    std::cout<<ret<<"\n";
+
+}
 #if 0
 int test_lex(std::string file_name, std::string file_out)
 {

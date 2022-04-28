@@ -46,6 +46,7 @@ HEADERS += \
     ../../src/ORegexParse.h \
     ../../src/flex_sample1.h \
     ../../src/nfaconvert.h \
+    ../../src/util/flex_sample1_temp.inc \
     ../../src/util/num2str.h \
     ../../src/lexfileparse.h \
     ../../test/quut_com_ansi_c.l \

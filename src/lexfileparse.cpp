@@ -15,20 +15,24 @@
 using namespace std;
 
 
-int skip_pair(std::string line, int start_index, unsigned start_char, unsigned end_char, int depth=0)
+int skip_pair(const std::string& line, int start_index, unsigned start_char, unsigned end_char, int depth=0)
 {
     int i = start_index;
 
     if(line[i]==start_char)
     {
         depth++;
-
-        while((line[i+1]!=0)&&(line[i+1]!=end_char))
+        ++i;
+        while((line[i]!=0)&&(line[i]!=end_char))
         {
+            if (line[i]=='\\')
+            {
+                ++i;
+            }
             ++i;
-            depth--;
-            if(depth==0)break;
+            //if(depth==0)break;
         }
+        depth--;
         return i+1;
     }
     return i;
@@ -188,7 +192,23 @@ unsigned skip_to_blank(const std::string &file_cont, unsigned ipos)
     if (file_cont.size()<=(ipos+1))return ipos;
     while((file_cont[ipos]!=' ')&&(file_cont[ipos]!='\t')&&(file_cont[ipos]!='\n')&&(file_cont[ipos]!='\r'))
     {
-        ipos++;
+        unsigned int start=ipos;
+        ipos = skip_pair(file_cont, ipos, '"','"');
+        ipos = skip_pair(file_cont, ipos, '[',']');
+        ipos = skip_pair(file_cont, ipos, '{','}');
+        ipos = skip_pair(file_cont, ipos, '(',')');
+        ipos = skip_pair(file_cont, ipos, '\'','\'');
+
+        if (file_cont[ipos]=='\\')
+        {
+            ipos+=2;
+        }
+        if(start==ipos)
+        {
+            ipos++;
+        }
+
+
         if ((ipos+1)==file_cont.size())break;
     }
     return ipos;
@@ -308,6 +328,39 @@ std::string render_regex(std::string raw_input, const std::map<std::string, std:
 /// 输入文件内容，输出解析后结果：
 /// 状态字符串 -->执行代码字符串
 ///
+std::string get_regex_key(unsigned int &ipos, const std::string & file_cont, int &curr_mode)
+{
+    std::string regex_key;
+    ipos = skip_to_nblank(file_cont, ipos);
+    if ((file_cont[ipos]=='%')&&(file_cont[ipos+1]=='%'))
+    {
+        curr_mode=2;
+        ipos+=2;
+        return regex_key;
+    }
+
+    ipos = skip_to_nblank(file_cont, ipos);
+    unsigned int start = ipos;
+
+    ipos = skip_pair(file_cont, ipos, '"','"');
+    ipos = skip_pair(file_cont, ipos, '[',']');
+    ipos = skip_pair(file_cont, ipos, '{','}');
+    ipos = skip_pair(file_cont, ipos, '(',')');
+
+    ipos = skip_to_blank(file_cont, ipos);
+    unsigned int end = ipos;
+    regex_key.assign(file_cont.begin()+start, file_cont.begin()+end);
+    regex_key=trim(regex_key);
+    regex_key=trim1(regex_key,'\xba');
+    regex_key=trim1(regex_key,'\x0d');
+    regex_key=trim1(regex_key,'\xf0');
+    regex_key=trim1(regex_key,'\255');
+
+    regex_key=trim1(regex_key,'\xad');
+    regex_key=trim1(regex_key,'\0');
+    return regex_key;
+}
+
 int lex_file_parse2(const string &file_cont, std::vector<std::map<string, string> > &regex_rule, string &includes, string &add_code, int is_debug)
 {
 
@@ -400,33 +453,11 @@ int lex_file_parse2(const string &file_cont, std::vector<std::map<string, string
         }
         else if(curr_mode==1)
         {
-            ipos = skip_to_nblank(file_cont, ipos);
-            if ((file_cont[ipos]=='%')&&(file_cont[ipos+1]=='%'))
+            std::string regex_key = get_regex_key(ipos, file_cont,curr_mode);
+            if(regex_key.empty())
             {
-                curr_mode=2;
-                ipos+=2;
                 continue;
             }
-
-            ipos = skip_to_nblank(file_cont, ipos);
-            start = ipos;
-
-            ipos = skip_pair(file_cont, ipos, '"','"');
-            ipos = skip_pair(file_cont, ipos, '[',']');
-            ipos = skip_pair(file_cont, ipos, '{','}');
-            ipos = skip_pair(file_cont, ipos, '(',')');
-
-            ipos = skip_to_blank(file_cont, ipos);
-            end = ipos;
-            regex_key.assign(file_cont.begin()+start, file_cont.begin()+end);
-            regex_key=trim(regex_key);
-            regex_key=trim1(regex_key,'\xba');
-            regex_key=trim1(regex_key,'\x0d');
-            regex_key=trim1(regex_key,'\xf0');
-            regex_key=trim1(regex_key,'\255');
-
-            regex_key=trim1(regex_key,'\xad');
-            regex_key=trim1(regex_key,'\0');
 
 
             ipos = skip_to_nblank(file_cont, ipos);

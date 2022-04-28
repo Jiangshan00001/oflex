@@ -42,7 +42,7 @@ std::string lex_file_out(std::string includes, std::string add_code,
         std::string lex_str = regex_rule[i].begin()->first;
         FSA_TABLE nfa = mRegex.CreateNFAFlex(lex_str, start_id);
 
-        std::cout<<i<<". "<<lex_str<<"\n";
+        if(is_debug)std::cout<<i<<". "<<lex_str<<"\n";
         if(is_debug)fsa_to_dot(nfa, num2str(i)+"nfa"+".dot");
 
 
@@ -54,6 +54,11 @@ std::string lex_file_out(std::string includes, std::string add_code,
 
         if(is_debug)fsa_to_dot(dfa, num2str(i)+"dfa"+".dot");
         NFAState* final_state = find_fsa_table_final_state(dfa);
+        if(final_state==NULL)
+        {
+            std::cerr<<"no final state find. their must be an error\n";
+            break;
+        }
         end_state_ids.push_back(final_state->m_nStateID);
         int curr_len = nfa_all.size();
         nfa_all.insert(nfa_all.end(), dfa.begin(), dfa.end());
@@ -88,8 +93,8 @@ std::string lex_file_out(std::string includes, std::string add_code,
     for(int i=0;i<dfa.size();++i)
     {
         if(dfa[i]->m_bAcceptingState!=FINAL_STATE)continue;
-        std::string str_pkd=string_pack(dfa[i]->m_accepting_regrex) ;
-        iss<<"\""<<str_pkd <<"\"" <<",\n";
+        std::string str_pkd="R\"AAA("+dfa[i]->m_accepting_regrex+")AAA\"";
+        iss<<str_pkd  <<",\n";
         final_state_str.insert(str_pkd);
     }
     iss<<"};\n";
@@ -158,7 +163,7 @@ std::string lex_file_out(std::string includes, std::string add_code,
 
 
     iss<<"default:\nbreak;\n";
-    iss<<"\n};\nreturn 0;\n}\n";
+    iss<<"\n};\nreturn NORETURN_ID;\n}\n";
 
     return iss.str();
 }
@@ -203,15 +208,26 @@ int main_qt(int argc, char *argv[])
     {
         std::string file_name = parse.GetOption('i');
         std::string file_out = "oflex_sample.h";
-        std::string class_name = "flex_sample";
+        std::string class_name = "oflex_sample";
+        std::string token_header = "token_header.h";
+        std::string token_class_name = "OToken";
         std::string jmp_file_name="";
         if(parse.HaveOption('o'))
         {
             file_out = parse.GetOption('o');
         }
-        if(parse.HaveOption('c'))
+        if(parse.HaveOption('t'))
         {
-            class_name = parse.GetOption('c');
+            token_header = parse.GetOption('t');
+        }
+
+        if(parse.HaveOption('p'))
+        {
+            class_name = parse.GetOption('p');
+        }
+        if(parse.HaveOption('k'))
+        {
+            token_class_name = parse.GetOption('k');
         }
         if(parse.HaveOption('d'))
         {
@@ -222,6 +238,7 @@ int main_qt(int argc, char *argv[])
         {
             jmp_file_name=parse.GetOption('j');
         }
+
 
 
 
@@ -266,11 +283,21 @@ int main_qt(int argc, char *argv[])
 
 
         flex_sample1 sample1;
-        ret = sample1.render(ret, includes, add_code,class_name);
+        ret = sample1.render(ret, includes, add_code,class_name,token_header, token_class_name);
         std::ofstream ofile;
         ofile.open(file_out);
+        std::cout<<"writing to file:"<<file_out<<"\n";
         ofile<<ret;
         ofile.close();
+
+        if(!token_header.empty())
+        {
+            std::ofstream ofile;
+            ofile.open(token_header);
+            std::cout<<"writing to file:"<<token_header<<"\n";
+            ofile<<sample1.token_header(token_class_name);
+            ofile.close();
+        }
 
 
 
@@ -278,7 +305,7 @@ int main_qt(int argc, char *argv[])
     }
 
     std::cout<<"usage: prog -s string_regrex -d dfa_file_name.dot\n";
-    std::cout<<"usage: prog -i lex.l -o output.h -c class_name\n";
+    std::cout<<"usage: prog -i lex.l -o output.h -t token_header.h -p parser_class_name -k token_class_name  \n";
 
     return 0;
 }

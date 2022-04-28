@@ -491,6 +491,8 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
                     Eval(OperandStack, OperatorStack);
                 }
                 OperatorStack.pop();//pop "
+
+                add_concat_if_need(OperandStack, OperatorStack);
                 continue;
             }
             if(c=='\\')
@@ -591,6 +593,14 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
                     //continue;
                 }
 
+                if((OperatorStack.size()>0)&&((OperatorStack.top().val==OPERATOR_STAR)||
+                        (OperatorStack.top().val==OPERATOR_WHY)||
+                        (OperatorStack.top().val==OPERATOR_PLUS)))
+                {
+                    //单目运算符，在添加新的连接字符前，需要先计算，否则会导致堆栈错误
+                    Eval(OperandStack, OperatorStack);
+                }
+
 
                 if(c=='.')
                 {
@@ -643,8 +653,10 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
     }
 
     // Evaluate the rest of operators
-    while(!OperatorStack.empty())
+    while((OperandStack.size()>1)||(OperatorStack.size()>0))
+    //while(!OperatorStack.empty())
     {
+        add_concat_if_need(OperandStack, OperatorStack);
         if(!Eval(OperandStack, OperatorStack))
             return mNFATable;
     }
