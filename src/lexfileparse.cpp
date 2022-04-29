@@ -187,7 +187,7 @@ map<string, string> lex_file_parse(const std::string &file_cont)
 }
 
 
-unsigned skip_to_blank(const std::string &file_cont, unsigned ipos)
+unsigned skip_to_blank(const std::string &file_cont, unsigned ipos, bool is_regex=0)
 {
     if (file_cont.size()<=(ipos+1))return ipos;
     while((file_cont[ipos]!=' ')&&(file_cont[ipos]!='\t')&&(file_cont[ipos]!='\n')&&(file_cont[ipos]!='\r'))
@@ -197,7 +197,7 @@ unsigned skip_to_blank(const std::string &file_cont, unsigned ipos)
         ipos = skip_pair(file_cont, ipos, '[',']');
         ipos = skip_pair(file_cont, ipos, '{','}');
         ipos = skip_pair(file_cont, ipos, '(',')');
-        ipos = skip_pair(file_cont, ipos, '\'','\'');
+        if(!is_regex){ipos = skip_pair(file_cont, ipos, '\'','\'');}
 
         if (file_cont[ipos]=='\\')
         {
@@ -209,7 +209,7 @@ unsigned skip_to_blank(const std::string &file_cont, unsigned ipos)
         }
 
 
-        if ((ipos+1)==file_cont.size())break;
+        if ((ipos+1)>=file_cont.size())break;
     }
     return ipos;
 }
@@ -347,7 +347,7 @@ std::string get_regex_key(unsigned int &ipos, const std::string & file_cont, int
     ipos = skip_pair(file_cont, ipos, '{','}');
     ipos = skip_pair(file_cont, ipos, '(',')');
 
-    ipos = skip_to_blank(file_cont, ipos);
+    ipos = skip_to_blank(file_cont, ipos, 1);
     unsigned int end = ipos;
     regex_key.assign(file_cont.begin()+start, file_cont.begin()+end);
     regex_key=trim(regex_key);
@@ -359,6 +359,20 @@ std::string get_regex_key(unsigned int &ipos, const std::string & file_cont, int
     regex_key=trim1(regex_key,'\xad');
     regex_key=trim1(regex_key,'\0');
     return regex_key;
+}
+
+std::string get_regex_val(unsigned int &ipos, const std::string & file_cont)
+{
+    std::string regex_str;
+    ipos = skip_to_nblank(file_cont, ipos);
+    unsigned int start = ipos;
+    ipos = find_block_end(file_cont, ipos);
+    ///找到{ }
+    ///
+    //ipos = skip_to_blank(file_cont, ipos);
+    unsigned int end = ipos;
+    regex_str.assign(file_cont.begin()+start, file_cont.begin()+end);
+    return regex_str;
 }
 
 int lex_file_parse2(const string &file_cont, std::vector<std::map<string, string> > &regex_rule, string &includes, string &add_code, int is_debug)
@@ -459,24 +473,13 @@ int lex_file_parse2(const string &file_cont, std::vector<std::map<string, string
                 continue;
             }
 
+            regex_str = get_regex_val(ipos, file_cont);
 
-            ipos = skip_to_nblank(file_cont, ipos);
-            start = ipos;
-            ipos = find_block_end(file_cont, ipos);
-            ///找到{ }
-            ///
-            //ipos = skip_to_blank(file_cont, ipos);
-            end = ipos;
-            regex_str.assign(file_cont.begin()+start, file_cont.begin()+end);
-
-            if(regex_key.size()>0)
-            {
-                regex_key = render_regex(regex_key, regex_temp);
-                std::map<std::string, std::string> mm1;
-                mm1[regex_key ] = regex_str;
-                regex_rule.push_back(mm1);
-                //regex_rule[regex_key]=regex_str;
-            }
+            regex_key = render_regex(regex_key, regex_temp);
+            std::map<std::string, std::string> mm1;
+            mm1[regex_key ] = regex_str;
+            regex_rule.push_back(mm1);
+            //regex_rule[regex_key]=regex_str;
 
         }
         else if(curr_mode==2)

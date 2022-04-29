@@ -17,8 +17,8 @@ int mainffff(int argc, char *argv[])
 {
 
 
-    //std::string file_name = "../../test/quut_com_ansi_c.l";
-    std::string file_name = "../../test/calc.l";
+    std::string file_name = "../../test/quut_com_ansi_c.l";
+    //std::string file_name = "../../test/calc.l";
     std::string file_out = "default.inc";
 
     std::ifstream ifile;
@@ -54,14 +54,14 @@ int mainffff(int argc, char *argv[])
     return 0;
 }
 
-int main(int argc, char *argv[])
+int mainreg(int argc, char *argv[])
 {
     //string parse
     ORegexParse mRegex;
     NFAConvert mConvert;
 
 
-    FSA_TABLE nfa = mRegex.CreateNFAFlex("[0-9][0-9]*");
+    //FSA_TABLE nfa = mRegex.CreateNFAFlex("[0-9][0-9]*");
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("[^1-9a-zA-Z]+");
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("((1|2)|3)+");
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("[0-1]*\".\"");
@@ -71,6 +71,7 @@ int main(int argc, char *argv[])
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("[a-bA-B_]([a-bA-B_]|[0-1])*");
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("[0-9][0-9]*");
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("B*C");
+    FSA_TABLE nfa = mRegex.CreateNFAFlex("L?'(\\.|[^\\'\n])+'");
     fsa_to_dot(nfa, "nfa1.dot");
     FSA_TABLE dfa = mConvert.NFAtoDFA(nfa);
     fsa_to_dot(dfa, "dfa1.dot");
@@ -81,7 +82,7 @@ int main(int argc, char *argv[])
     std::cout<<fsa_to_dot_ss(newDFA);
     return 0;
 }
-int mainerg(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     std::vector< std::map<std::string, std::string > > regex_rule;
     std::string add_code;
@@ -89,9 +90,9 @@ int mainerg(int argc, char *argv[])
     int is_debug = 1;
     std::string file_cont=R"ZZZ(
 %%
-"{" {return 2;}
-. {return 3;}
+L?'(\\.|[^\\'\n])+'	{ count(); return(CONSTANT); }
 
+{D}+{E}{FS}?		{ count(); return(CONSTANT); }
 %%
 
                           )ZZZ";

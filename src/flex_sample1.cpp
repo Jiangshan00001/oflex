@@ -290,13 +290,14 @@ public:
    }
    TOKEN_CLASS_NAME(std::string typ_str, std::string ytext)
    {
-      m_yytext=ytext;
       m_ret= is_eof=m_line=m_column=0;
-      //m_ret=typ;
+      m_yytext=ytext;
+      m_typestr=typ_str;
    }
 
    std::string m_yytext;
    int m_ret;
+   std::string m_typestr;
    int is_eof;
    int m_line;
    int m_column;

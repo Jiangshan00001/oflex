@@ -38,7 +38,7 @@ diff_dfa(${CMAKE_CURRENT_SOURCE_DIR}/${IFILE_BASE}  ${CMAKE_CURRENT_BINARY_DIR}/
 
 endforeach()
 
-set(TEST_L_SRCS calc.l)
+set(TEST_L_SRCS calc.l quut_com_ansi_c.l)
 # quut_com_ansi_c.l
 foreach(MY_ASM  ${TEST_L_SRCS})
 
