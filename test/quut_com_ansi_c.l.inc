@@ -128,17 +128,9 @@ void count(void);
             {
                 ///没有任何匹配的字符
                 ///
-                std::cerr<<"unknown pattern:"<<m_line<<":"<<m_column<<"\n";
+                std::cerr<<"unknown pattern LINE/COLUMN:"<<m_line<<"/"<<m_column<<". char:"<< (char)curr_char<<"("<<curr_char<< ")\n";
             }
         }
-
-
- //        if(curr_lut[curr_char]!=-1)
- //        {
- //            std::cerr<<"char not known\n";
- //            return tt;
- //        }
-
 
         return tt;
     }
@@ -214,8 +206,10 @@ void count(void);
         }
         int index = it - m_end_state_id.begin();
         return m_end_state_regex[index];
-
-
+    }
+    void yyerror(const char* err)
+    {
+        std::cerr<<err<<"\n";
 
     }
 public:

@@ -136,17 +136,9 @@ std::string flex_sample1::render(std::string core_txt, std::string headers,
             {
                 ///没有任何匹配的字符
                 ///
-                std::cerr<<"unknown pattern:"<<m_line<<":"<<m_column<<"\n";
+                std::cerr<<"unknown pattern LINE/COLUMN:"<<m_line<<"/"<<m_column<<". char:"<< (char)curr_char<<"("<<curr_char<< ")\n";
             }
         }
-
-
- //        if(curr_lut[curr_char]!=-1)
- //        {
- //            std::cerr<<"char not known\n";
- //            return tt;
- //        }
-
 
         return tt;
     }
@@ -222,8 +214,10 @@ std::string flex_sample1::render(std::string core_txt, std::string headers,
         }
         int index = it - m_end_state_id.begin();
         return m_end_state_regex[index];
-
-
+    }
+    void yyerror(const char* err)
+    {
+        std::cerr<<err<<"\n";
 
     }
 public:
@@ -280,10 +274,12 @@ class TOKEN_CLASS_NAME
 public:
    TOKEN_CLASS_NAME()
    {
+      m_rule_index=-1;
       m_ret= is_eof=m_line=m_column=0;
    }
    TOKEN_CLASS_NAME(int typ, std::string ytext)
    {
+      m_rule_index=-1;
       m_yytext=ytext;
       m_ret= is_eof=m_line=m_column=0;
       m_ret=typ;
@@ -297,6 +293,7 @@ public:
 
    std::string m_yytext;
    int m_ret;
+   int m_rule_index;//only use when m_ret is non-term
    std::string m_typestr;
    int is_eof;
    int m_line;

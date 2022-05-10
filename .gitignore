@@ -10,3 +10,4 @@ build/*
 test/tmp/*
 .idea/*
 vc_build/*
+nfa_error.png
