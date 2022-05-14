@@ -79,7 +79,7 @@ std::string fsa_to_dot_ss(FSA_TABLE  fsa)
                 stream<<fsa[i]->GetStateID()<<"->"<< (*it)->GetStateID();
 
 
-                char mT[4]={0,0,0,0};
+                char mT[6]={0,0,0,0,0,0};
                 int val = curr_chars[j];
                 if(val==EPS_CHAR)
                 {
@@ -93,9 +93,11 @@ std::string fsa_to_dot_ss(FSA_TABLE  fsa)
                     int b = (val/100)%10;
                     int s = (val/10 )%10;
                     int g = val%10;
-                    mT[0] = b+'0';
-                    mT[1] = s+'0';
-                    mT[2] = g+'0';
+                    mT[0]='0';
+                    mT[1]='X';
+                    mT[2] = b+'0';
+                    mT[3] = s+'0';
+                    mT[4] = g+'0';
                 }
                 else
                 {

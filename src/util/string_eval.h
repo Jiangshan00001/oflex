@@ -13,4 +13,6 @@ std::string string_eval(std::string str_raw);
 /// 将真实的字符串，转为显示用的字符串。主要是回车符转为 \n
 std::string string_pack(std::string stri);
 
+/// input mchar='t' output '\t'
+int string_splash_char(int mchar);
 #endif // STRING_EVAL_H

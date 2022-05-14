@@ -30,9 +30,15 @@ std::string flex_sample1::render(std::string core_txt, std::string headers,
  {
  public:
     typedef TOKEN_CLASS_NAME token;
-    int m_is_debug=1;
+    int m_is_debug=0;
 
  public:
+     TEMPLATE_CLASS_NAME()
+     {
+         m_text_index=0;
+     }
+
+
     int set_file_name(std::string file_name)
     {
         std::ifstream m_filein;
@@ -200,10 +206,6 @@ std::string flex_sample1::render(std::string core_txt, std::string headers,
         return 0;
     }
 
-    oflex_sample()
-    {
-        m_text_index=0;
-    }
 
     std::string get_state_str(int state_id)
     {

@@ -71,7 +71,8 @@ int mainreg(int argc, char *argv[])
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("[a-bA-B_]([a-bA-B_]|[0-1])*");
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("[0-9][0-9]*");
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("B*C");
-    FSA_TABLE nfa = mRegex.CreateNFAFlex("L?'(\\.|[^\\'\n])+'");
+    //FSA_TABLE nfa = mRegex.CreateNFAFlex("L?'(\\.|[^\\'\n])+'");
+    FSA_TABLE nfa = mRegex.CreateNFAFlex("\"\n\"");
     fsa_to_dot(nfa, "nfa1.dot");
     FSA_TABLE dfa = mConvert.NFAtoDFA(nfa);
     fsa_to_dot(dfa, "dfa1.dot");
@@ -89,11 +90,16 @@ int main(int argc, char *argv[])
     std::string includes;
     int is_debug = 1;
     std::string file_cont=R"ZZZ(
-%%
-L?'(\\.|[^\\'\n])+'	{ count(); return(CONSTANT); }
 
-{D}+{E}{FS}?		{ count(); return(CONSTANT); }
 %%
+[a-zA-Z]+ {}
+
+"\n"        { }
+
+.         { }
+
+%%
+
 
                           )ZZZ";
     lex_file_parse2(file_cont, regex_rule,includes, add_code,0);

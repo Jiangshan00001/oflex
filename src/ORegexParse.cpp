@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "ORegexParse.h"
 #include "fsa_to_dot.h"
+#include "string_eval.h"
 
 using namespace std;
 
@@ -498,7 +499,7 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
             if(c=='\\')
             {
                 ++i;
-                c = strRegEx[i];
+                c = string_splash_char(strRegEx[i]);
                 //PushOneByte(c, OperandStack);
                 //continue;
             }

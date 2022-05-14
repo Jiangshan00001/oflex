@@ -1,8 +1,49 @@
+///2022.5.14 add function string_splash_char
 #include <map>
 #include "replace.h"
 #include "str2number.h"
 #include "string_eval.h"
 
+int string_splash_char(int mchar)
+{
+    switch(mchar)
+    {
+    case 'a':
+        return '\a';
+        break;
+    case 'b':
+        return '\b';
+        break;
+    case 'f':
+    {
+        return '\f';
+    }
+        break;
+    case 'n':
+    {
+        return '\n';
+    }
+        break;
+    case 'r':
+    {
+        return '\r';
+    }
+        break;
+    case 't':
+    {
+        return '\t';
+    }
+        break;
+    case 'v':
+    {
+        return '\v';
+    }
+        break;
+    default:
+        return mchar;
+    }
+    return mchar;
+}
 
 std::string string_eval(std::string str_raw)
 {
@@ -42,93 +83,93 @@ std::string string_eval(std::string str_raw)
 
                 switch(str_raw[i+1])
                 {
-                    case 'x':
+                case 'x':
+                {
+                    // \x000ff
+                    unsigned j=i+2;
+                    for(j=i+2;j<str_raw.size();++j)
                     {
-                        // \x000ff
-                        unsigned j=i+2;
-                        for(j=i+2;j<str_raw.size();++j)
+                        if(((str_raw[j]>='0')&&(str_raw[j]<='9'))||
+                                ((str_raw[j]>='a')&&(str_raw[j]<='f'))||
+                                ((str_raw[j]>='A')&&(str_raw[j]<='F'))
+                                )
                         {
-                            if(((str_raw[j]>='0')&&(str_raw[j]<='9'))||
-                                    ((str_raw[j]>='a')&&(str_raw[j]<='f'))||
-                                    ((str_raw[j]>='A')&&(str_raw[j]<='F'))
-                                    )
-                            {
-                                continue;
-                            }
-                            break;
+                            continue;
                         }
-                        std::string numstr = str_raw.substr(i+2, j-i-2);
-                        // \x00ff 擦除 x00ff 保留 \ 用于存储ff数值
-                        str_raw.erase(str_raw.begin()+i+1,str_raw.begin()+j);
-                        str_raw[i] =StrToNumber("0x"+numstr);
+                        break;
                     }
+                    std::string numstr = str_raw.substr(i+2, j-i-2);
+                    // \x00ff 擦除 x00ff 保留 \ 用于存储ff数值
+                    str_raw.erase(str_raw.begin()+i+1,str_raw.begin()+j);
+                    str_raw[i] =StrToNumber("0x"+numstr);
+                }
                     break;
 
 
 
-                    case '\\':
-                    case '\"':
-                    case '\'':
-                    case '\?':
-                    {
-                        // \\ 转义
-                        str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
-                    }
+                case '\\':
+                case '\"':
+                case '\'':
+                case '\?':
+                {
+                    // \\ 转义
+                    str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
+                }
                     break;
-                    case 'a':
-                    {
-                        str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
-                        str_raw[i] = '\a';
-                    }
+                case 'a':
+                {
+                    str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
+                    str_raw[i] = '\a';
+                }
                     break;
-                    case 'b':
-                    {
-                        str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
-                        str_raw[i] = '\b';
-                    }
+                case 'b':
+                {
+                    str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
+                    str_raw[i] = '\b';
+                }
                     break;
-                    case 'f':
-                    {
-                        str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
-                        str_raw[i] = '\f';
-                    }
+                case 'f':
+                {
+                    str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
+                    str_raw[i] = '\f';
+                }
                     break;
-                    case 'n':
-                    {
-                        str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
-                        str_raw[i] = '\n';
-                    }
+                case 'n':
+                {
+                    str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
+                    str_raw[i] = '\n';
+                }
                     break;
-                    case 'r':
-                    {
-                        str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
-                        str_raw[i] = '\r';
-                    }
+                case 'r':
+                {
+                    str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
+                    str_raw[i] = '\r';
+                }
                     break;
-                    case 't':
-                    {
-                        str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
-                        str_raw[i] = '\t';
-                    }
+                case 't':
+                {
+                    str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
+                    str_raw[i] = '\t';
+                }
                     break;
-                    case 'v':
-                    {
-                        str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
-                        str_raw[i] = '\v';
-                    }
+                case 'v':
+                {
+                    str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
+                    str_raw[i] = '\v';
+                }
                     break;
-                    case '0':
-                    {
-                        str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
-                        str_raw[i] = 0;
-                    }
+                case '0':
+                {
+                    str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
+                    str_raw[i] = 0;
+                }
                     break;
 
-                    default:
-                    {
-                        // \\ 转义
-                        str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
-                    }
+                default:
+                {
+                    // \\ 转义
+                    str_raw.erase(str_raw.begin()+i,str_raw.begin()+i+1 );
+                }
                     break;
                 }
             }

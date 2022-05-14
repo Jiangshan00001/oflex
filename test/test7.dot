@@ -11,12 +11,12 @@ color=lightgrey;
 1[shape=doublecircle color=red]
 label=cluster1;
 }
-0->1[label= "010" ]
+0->1[label= "0X010" ]
 0->1[label= "*" ]
 0->1[label= "+" ]
 0->1[label= "-" ]
 0->1[label= "/" ]
-1->1[label= "010" ]
+1->1[label= "0X010" ]
 1->1[label= "*" ]
 1->1[label= "+" ]
 1->1[label= "-" ]
