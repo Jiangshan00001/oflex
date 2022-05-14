@@ -22,9 +22,15 @@ void count(void);
  {
  public:
     typedef OToken token;
-    int m_is_debug=1;
+    int m_is_debug=0;
 
  public:
+     oflex_sample()
+     {
+         m_text_index=0;
+     }
+
+
     int set_file_name(std::string file_name)
     {
         std::ifstream m_filein;
@@ -192,10 +198,6 @@ void count(void);
         return 0;
     }
 
-    oflex_sample()
-    {
-        m_text_index=0;
-    }
 
     std::string get_state_str(int state_id)
     {
