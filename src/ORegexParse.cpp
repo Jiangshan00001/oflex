@@ -18,7 +18,7 @@ int ORegexParse::NFAStackPop(FSA_STACK &stk, FSA_TABLE &NFATable)
     // If the stack is empty we cannot pop anything
     if(stk.size()>0)
     {
-        NFATable = stk.top();
+        NFATable = stk.front();
 #if DEBUG_ALL
         static int i=0;
         stringstream istr;
@@ -26,7 +26,7 @@ int ORegexParse::NFAStackPop(FSA_STACK &stk, FSA_TABLE &NFATable)
         fsa_to_dot(NFATable, istr.str());
 #endif
 
-        stk.pop();
+        stk.pop_front();
         return 1;
     }
 
@@ -42,37 +42,10 @@ int ORegexParse::NFAStackPush(FSA_STACK &stk,FSA_TABLE &NFATable)
 	fsa_to_dot(NFATable, istr.str());
 #endif
 
-    stk.push(NFATable);
+    stk.push_front(NFATable);
 	return 0;
 }
 
-#if 0
-int ORegexParse::PushOneDot(FSA_STACK &dst)
-{
-    // Create 2 new states on the heap
-    NFAState *s0 = new NFAState(++m_nNextStateID);
-    NFAState *s1 = new NFAState(++m_nNextStateID);
-
-    // Add the transition from s0->s1 on input character
-    for(int i=0x20;i<0x7f;++i)
-    {
-        if(i=='\n')continue;
-        s0->AddTransition(i, s1);
-    }
-
-
-    // Create a NFA from these 2 states
-    FSA_TABLE NFATable;
-    NFATable.push_back(s0);
-    NFATable.push_back(s1);
-
-
-    // push it onto the operand stack
-    dst.push(NFATable);
-
-    return 0;
-}
-#endif
 
 void ORegexParse::add_concat_if_need(FSA_STACK &dst, std::stack<operator_stack_t> &operator_stack)
 {
@@ -126,7 +99,7 @@ int ORegexParse::PushMiddleLR(std::vector<int> chars, int is_inv,FSA_STACK &dst,
 
 
     // push it onto the operand stack
-    dst.push(NFATable);
+    dst.push_front(NFATable);
 
     add_concat_if_need(dst, operator_stack);
     ///----------------------------
@@ -143,7 +116,8 @@ int ORegexParse::PushDotByte(FSA_STACK &dst, std::stack<operator_stack_t> &opera
     NFAState *s0 = new NFAState(++m_nNextStateID);
     NFAState *s1 = new NFAState(++m_nNextStateID);
     ///add 10->\r in . seq
-    for(int i=10;i<0x7f;++i)
+    /// \t -->9
+    for(int i=9;i<0x7f;++i)
     {
         if(i=='\n')continue;
         // Add the transition from s0->s1 on input character
@@ -157,7 +131,7 @@ int ORegexParse::PushDotByte(FSA_STACK &dst, std::stack<operator_stack_t> &opera
 
 
     // push it onto the operand stack
-    dst.push(NFATable);
+    dst.push_front(NFATable);
 
     add_concat_if_need(dst, operator_stack);
 
@@ -182,7 +156,7 @@ int ORegexParse::PushOneByte(int chInput, FSA_STACK &dst, std::stack<operator_st
     NFATable.push_back(s1);
 
     // push it onto the operand stack
-    dst.push(NFATable);
+    dst.push_front(NFATable);
 
     add_concat_if_need(dst, operator_stack);
 
@@ -191,7 +165,7 @@ int ORegexParse::PushOneByte(int chInput, FSA_STACK &dst, std::stack<operator_st
 }
 
 
-bool ORegexParse::OPRWhy(FSA_STACK &stk)
+bool ORegexParse::OPRWhy(FSA_STACK &stk, int chPos)
 {
     // Pop 1 element
     FSA_TABLE A;
@@ -228,7 +202,7 @@ bool ORegexParse::OPRWhy(FSA_STACK &stk)
 
     return 1;
 }
-bool ORegexParse::OPRPlus(FSA_STACK &stk)
+bool ORegexParse::OPRPlus(FSA_STACK &stk, int chPos)
 {
     // Pop 1 element
     FSA_TABLE A;
@@ -290,12 +264,23 @@ bool ORegexParse::Concat(FSA_STACK &stk)
 	return 1;
 }
 
-bool ORegexParse::Star(FSA_STACK &stk)
+bool ORegexParse::Star(FSA_STACK &stk,int chPos)
 {
 	// Pop 1 element
 	FSA_TABLE A, B;
-    if(!NFAStackPop(stk, A))
-		return 0;
+    int is_pop = 1;
+    if(chPos==stk.size())
+    {
+        if(!NFAStackPop(stk, A))
+            return 0;
+    }
+    else
+    {
+        ///算符并不是应用在最顶层的operand上
+        A = stk[chPos-1];
+        is_pop = 0;
+    }
+
 	
 	// Now evaluate A*
 	// Create 2 new states which will be inserted 
@@ -322,8 +307,16 @@ bool ORegexParse::Star(FSA_STACK &stk)
 	A.push_back(pEndState);
 	A.push_front(pStartState);
 	
-	// Push the result onto the stack
-    NFAStackPush(stk, A);
+    if(is_pop)
+    {
+        // Push the result onto the stack
+        NFAStackPush(stk, A);
+    }
+    else
+    {
+        stk[chPos-1]=A;
+    }
+
 	
 	TRACE("STAR\n");
 	
@@ -390,6 +383,7 @@ bool ORegexParse::Eval(FSA_STACK &OperandStack, std::stack<operator_stack_t> &Op
     if(OperatorStack.size()>0)
 	{
         char chOperator = OperatorStack.top().val;
+        int chPos  = OperatorStack.top().operand_num;
         OperatorStack.pop();
 
 		
@@ -397,7 +391,7 @@ bool ORegexParse::Eval(FSA_STACK &OperandStack, std::stack<operator_stack_t> &Op
 		switch(chOperator)
 		{
         case  OPERATOR_STAR://#42
-            ret= Star(OperandStack);
+            ret= Star(OperandStack, chPos);
 			break;
         case OPERATOR_UNION://124
             ret= Union(OperandStack);
@@ -406,10 +400,10 @@ bool ORegexParse::Eval(FSA_STACK &OperandStack, std::stack<operator_stack_t> &Op
             ret= Concat(OperandStack);
 			break;
         case OPERATOR_WHY:
-            ret= OPRWhy(OperandStack);
+            ret= OPRWhy(OperandStack, chPos);
             break;
         case OPERATOR_PLUS:
-            ret= OPRPlus(OperandStack);
+            ret= OPRPlus(OperandStack, chPos);
             break;
         case OPERATOR_LEFTP:
             std::cerr<<"ORegexParse::Eval: unknown opr:"<<chOperator<<std::endl;
@@ -667,8 +661,8 @@ FSA_TABLE ORegexParse::CreateNFAFlex(string strRegEx, int startId)
     {
         return mNFATable;
     }
-    OperandStack.push(startNFATable);
-    OperandStack.push(mNFATable);
+    OperandStack.push_front(startNFATable);
+    OperandStack.push_front(mNFATable);
     OperatorStack.push( operator_stack_t(OperandStack.size(), OPERATOR_CONCAT) );
     Eval(OperandStack, OperatorStack);
     NFAStackPop(OperandStack, mNFATable);

@@ -71,7 +71,7 @@
             {
                 continue;
             }
-            //找不到合适的了，找到最近的一个最终态
+            //no more match. find the prev matched status
             int is_match=0;
             while(m_status_stack.size()>0)
             {
@@ -80,8 +80,7 @@
                 auto it = std::find(m_end_state_id.begin(), m_end_state_id.end(), cc);
                 if(it!=m_end_state_id.end())
                 {
-                    ///状态找到
-                    /// 此处返回给用户当前状态，并清空状态
+                    ///matched.
                     ///
                     tt.m_yytext.assign(m_text_to_parse.begin()+m_text_index-m_status_stack.size(),
                                     m_text_to_parse.begin()+m_text_index);
@@ -104,7 +103,11 @@
                     }
                 }
                 else
-                {///未匹配状态。如果有多个字符，则切换为之前的状态。如果只有1个字符，则出错，直接报错误，并恢复
+                {
+                    ///unmatched.
+                    /// if char size>1 then, rematch from prev char.
+                    /// if char size<=1, their must be some error
+
                     if(m_status_stack.size()>1){
                         unput();
                         m_status_stack.pop_back();
@@ -127,7 +130,7 @@
             }
             if(is_match==0)
             {
-                ///没有任何匹配的字符
+                ///no match anything
                 ///
                 std::cerr<<"unknown pattern LINE/COLUMN:"<<m_line<<"/"<<m_column<<". char:"<< (char)curr_char<<"("<<curr_char<< ")\n";
             }
@@ -142,7 +145,7 @@
         if(m_text_to_parse[m_text_index]=='\n')
         {
             m_line--;
-            ///FIXME: 此处如果退回到上一行，应该是上一行的最大列，而不是0
+            ///FIXME: unput one line, the column should be set to max of last line.
             m_column=0;
         }
         else

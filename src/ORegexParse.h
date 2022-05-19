@@ -84,7 +84,7 @@ private:
 		the star operator on it. It pushes the result
 		on the operand stack again.
 	*/
-    bool Star(FSA_STACK &stk);
+    bool Star(FSA_STACK &stk, int chPos);
 
 	//! Evaluates the union operator
 	/*! Pops 2 operands from the stack and evaluates
@@ -93,9 +93,9 @@ private:
 	*/
     bool Union(FSA_STACK &stk);
     /// L? zero or one L character
-    bool OPRWhy(FSA_STACK &stk);
+    bool OPRWhy(FSA_STACK &stk, int chPos);
     /// L+ one or more character
-    bool OPRPlus(FSA_STACK &stk);
+    bool OPRPlus(FSA_STACK &stk, int chPos);
 //////////////////////////////////////////////////////////////////////////
 
 	//! Checks is a specific character and operator
