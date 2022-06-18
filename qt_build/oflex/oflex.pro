@@ -25,8 +25,8 @@ SOURCES += \
     ../../src/flex_sample1.cpp \
     ../../src/main.cpp \
     ../../src/NFAState.cpp \
-    ../../src/ORegexList.cpp \
     ../../src/ORegexParse.cpp \
+    ../../src/regex_match.cpp \
     ../../src/util/num2str.cpp \
     main_qt.cpp \
     ../../src/nfaconvert.cpp \
@@ -37,15 +37,14 @@ SOURCES += \
     ../../src/util/split.cpp \
     ../../src/util/replace.cpp \
     ../../src/util/mylog.cpp \
-    ../../src/fsa_to_dot.cpp \
-    ../../src/mytests.cpp
+    ../../src/fsa_to_dot.cpp
 
 HEADERS += \
     ../../src/NFAState.h \
-    ../../src/ORegexList.h \
     ../../src/ORegexParse.h \
     ../../src/flex_sample1.h \
     ../../src/nfaconvert.h \
+    ../../src/regex_match.h \
     ../../src/util/flex_sample1_temp.inc \
     ../../src/util/num2str.h \
     ../../src/lexfileparse.h \
@@ -57,7 +56,6 @@ HEADERS += \
     ../../src/util/replace.h \
     ../../src/util/mylog.h \
     ../../src/fsa_to_dot.h \
-    ../../src/mytests.h \
     ../../src/util/argv.h
 
 OTHER_FILES += \

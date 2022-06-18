@@ -73,17 +73,20 @@ int main(int argc, char *argv[])
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("B*C");
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("L?'(\\.|[^\\'\n])+'");
     //FSA_TABLE nfa = mRegex.CreateNFAFlex("\"\n\"");
-    FSA_TABLE nfa = mRegex.CreateNFAFlex("A[0-1]*(u|U)?");
-    fsa_to_dot(nfa, "nfa1.dot");
+    //FSA_TABLE nfa = mRegex.CreateNFAFlex("A[0-1]*(u|U)?");
+    //FSA_TABLE nfa = mRegex.CreateNFAFlex("[A-C]+.+;.*");
+    FSA_TABLE nfa = mRegex.CreateNFAFlex("\\[.*\\].*");
+    fsa_to_dot(nfa, "nfa1.dot",1);
     FSA_TABLE dfa = mConvert.NFAtoDFA(nfa);
-    fsa_to_dot(dfa, "dfa1.dot");
+    fsa_to_dot(dfa, "dfa1.dot",1);
     FSA_TABLE dfamin = mConvert.DFAmin(dfa);
     FSA_TABLE newDFA;
     mConvert.ReNumber(dfamin, 0, newDFA);
-    fsa_to_dot(newDFA, "dfa_min1.dot");
-    std::cout<<fsa_to_dot_ss(newDFA);
+    fsa_to_dot(newDFA, "dfa_min1.dot",1);
+    std::cout<<fsa_to_dot_ss(newDFA,1);
     return 0;
 }
+
 int mainfill(int argc, char *argv[])
 {
     std::vector< std::map<std::string, std::string > > regex_rule;
