@@ -1,7 +1,7 @@
 #include "ORegexParse.h"
 #include "regex_match.h"
 #include <iostream>
-#include <NFAConvert.h>
+#include <nfaconvert.h>
 #include <fsa_to_dot.h>
 
 
