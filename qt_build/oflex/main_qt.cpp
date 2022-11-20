@@ -121,6 +121,7 @@ IS  (((u|U)(l|L|ll|LL)?)|((l|L|ll|LL)(u|U)?))
     std::cout<<"==========\n";
     std::cout<<ret<<"\n";
 
+    return 0;
 }
 #if 0
 int test_lex(std::string file_name, std::string file_out)
