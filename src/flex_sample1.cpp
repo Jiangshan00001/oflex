@@ -296,7 +296,7 @@ public:
       m_yytext=ytext;
       m_typestr=typ_str;
    }
-   std::ostream& operator<<(std::ostream&out, const TOKEN_CLASS_NAME & a)
+   friend std::ostream& operator<<(std::ostream&out, const TOKEN_CLASS_NAME & a)
    {
     out<<a.m_yytext<<"\n";
     return out;
