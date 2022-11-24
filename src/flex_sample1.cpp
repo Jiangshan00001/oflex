@@ -274,6 +274,7 @@ std::string flex_sample1::token_header(std::string token_class_name)
 #define TOKEN_CLASS_NAME_h
 #include <vector>
 #include <string>
+#include <iostream>
 class TOKEN_CLASS_NAME
 {
 public:
@@ -294,6 +295,11 @@ public:
       m_ret= is_eof=m_line=m_column=0;
       m_yytext=ytext;
       m_typestr=typ_str;
+   }
+   std::ostream& operator<<(std::ostream&out const TOKEN_CLASS_NAME & a)
+   {
+    out<<a.m_yytext<<"\n";
+    return out;
    }
 
    std::string m_yytext;
