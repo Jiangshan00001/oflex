@@ -9,7 +9,8 @@ flex_sample1::flex_sample1()
 
 std::string flex_sample1::render(std::string core_txt, std::string headers,
                                  std::string other_code, std::string class_name,
-                                 std::string token_header_file, std::string token_class_namne)
+                                 std::string token_header_file, std::string token_class_namne,
+                                 std::string name_space)
 {
     std::string temp=R"AAA(//raw;
 
@@ -25,6 +26,8 @@ std::string flex_sample1::render(std::string core_txt, std::string headers,
 #include "TOKEN_HEADER_FILE"
 
  TEMPLATE_HEADER_POSITION
+
+ namespace NAME_SPACE{
 
  class TEMPLATE_CLASS_NAME
  {
@@ -248,6 +251,8 @@ public:
  #endif
  };
 
+};//NAME_SPACE
+
  #endif
 
 
@@ -261,13 +266,14 @@ public:
     replace(temp, "TEMPLATE_CLASS_NAME", class_name);
     replace(temp, "TOKEN_HEADER_FILE", token_header_file);
     replace(temp, "TOKEN_CLASS_NAME", token_class_namne);
+    replace(temp, "NAME_SPACE", name_space);
 
 
 
     return temp;
 }
 
-std::string flex_sample1::token_header(std::string token_class_name)
+std::string flex_sample1::token_header(std::string token_class_name, std::string name_space)
 {
     std::string ss=R"AAA(
 #ifndef TOKEN_CLASS_NAME_h
@@ -275,6 +281,10 @@ std::string flex_sample1::token_header(std::string token_class_name)
 #include <vector>
 #include <string>
 #include <iostream>
+
+namespace NAME_SPACE
+{
+
 class TOKEN_CLASS_NAME
 {
 public:
@@ -314,11 +324,15 @@ public:
    std::vector<TOKEN_CLASS_NAME> m_children;
    int m_val;
 };
+
+};//NAME_SPACE
+
 #endif
 
                    )AAA";
 
     replace(ss, "TOKEN_CLASS_NAME", token_class_name);
+    replace(ss, "NAME_SPACE", name_space);
 
     return ss;
 }

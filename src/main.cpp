@@ -212,6 +212,7 @@ int main_qt(int argc, char *argv[])
         std::string token_header = "token_header.h";
         std::string token_class_name = "OToken";
         std::string jmp_file_name="";
+        std::string name_space = "fb_space";
         if(parse.HaveOption('o'))
         {
             file_out = parse.GetOption('o');
@@ -237,6 +238,9 @@ int main_qt(int argc, char *argv[])
         if(parse.HaveOption('d'))
         {
             jmp_file_name=parse.GetOption('j');
+        }
+        if(parse.HaveOption('n')){
+            name_space=parse.GetOption('n');
         }
 
 
@@ -283,7 +287,7 @@ int main_qt(int argc, char *argv[])
 
 
         flex_sample1 sample1;
-        ret = sample1.render(ret, includes, add_code,class_name,token_header, token_class_name);
+        ret = sample1.render(ret, includes, add_code,class_name,token_header, token_class_name,name_space);
         std::ofstream ofile;
         ofile.open(file_out);
         std::cout<<"writing to file:"<<file_out<<"\n";
@@ -295,7 +299,7 @@ int main_qt(int argc, char *argv[])
             std::ofstream ofile;
             ofile.open(token_header);
             std::cout<<"writing to file:"<<token_header<<"\n";
-            ofile<<sample1.token_header(token_class_name);
+            ofile<<sample1.token_header(token_class_name,name_space);
             ofile.close();
         }
 
@@ -305,7 +309,7 @@ int main_qt(int argc, char *argv[])
     }
 
     std::cout<<"usage: prog -s string_regrex -d dfa_file_name.dot\n";
-    std::cout<<"usage: prog -i lex.l -o output.h -t token_header.h -p parser_class_name -k token_class_name  \n";
+    std::cout<<"usage: prog -i lex.l -o output.h -t token_header.h -p parser_class_name -k token_class_name -n namespace  \n";
 
     return 0;
 }
