@@ -292,6 +292,7 @@ public:
    {
       m_rule_index=-1;
       m_ret= is_eof=m_line=m_column=0;
+      m_state_id=0;
    }
    TOKEN_CLASS_NAME(int typ, std::string ytext)
    {
@@ -299,12 +300,15 @@ public:
       m_yytext=ytext;
       m_ret= is_eof=m_line=m_column=0;
       m_ret=typ;
+        m_state_id=0;
    }
    TOKEN_CLASS_NAME(std::string typ_str, std::string ytext)
    {
+      m_rule_index=-1;
       m_ret= is_eof=m_line=m_column=0;
       m_yytext=ytext;
       m_typestr=typ_str;
+        m_state_id=0;
    }
    friend std::ostream& operator<<(std::ostream&out, const TOKEN_CLASS_NAME & a)
    {
